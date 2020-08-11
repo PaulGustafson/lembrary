@@ -5,34 +5,45 @@ import subprocess
 from sqlitedict import SqliteDict
 
 
-@module.commands('let')
-def fundef(bot, trigger):
-    function = trigger.group(2)
-    moduleName = trigger.nick + str(int(1000*time.time()))
-    if re.search(r'\W', moduleName) != None:
-        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
-        return
+# @module.commands('let')
+# def fundef(bot, trigger):
+#     function = trigger.group(2)
+#     moduleName = trigger.nick + str(int(1000*time.time()))
+#     if re.search(r'\W', moduleName) != None:
+#         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
+#         return
 
-    path = '/home/a/lembrary/' + moduleName + '.hs'
-    print("FILE CREATED: " + path)
+#     tokens = re.split('\W+', expr)
+
+#     imports = []
     
-    with open(path, "w+") as f:
-        f.write("module " + moduleName + " where\n")
-        f.write(function + "\n")
+#     with SqliteDict(filename='/home/a/lembrary/fn_mod_dict.sqlite') as fmDict:
+#         for t in tokens:
+#             if t in fmDict:
+#                 imports.append(fmDict[t][0])
 
-    result = subprocess.run(['ghc', path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    lines = result.stdout.decode('UTF-8').splitlines()
-    for l in lines:
-        bot.reply(l)
+#     path = '/home/a/lembrary/' + moduleName + '.hs'
+    
+#     with open(path, "w+") as f:
+#         print("FILE CREATED: " + path)
+#         f.write("module " + moduleName + " where\n")
+#         for i in imports:
+#             f.write("import " + i + "\n")
+#         f.write(function + "\n")
 
-    functionName = function.split()[0]
-    with SqliteDict(filename='/home/a/lembrary/fn_mod_dict.sqlite') as fmDict:
-        if not functionName in fmDict:
-            fmDict[functionName] = []
-        modList = fmDict[functionName]
-        modList.append(moduleName)
-        fmDict[functionName] = modList
-        fmDict.commit()
+#     result = subprocess.run(['ghc', '-i/home/a/lembrary', path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+#     lines = result.stdout.decode('UTF-8').splitlines()
+#     for l in lines:
+#         bot.reply(l)
+
+#     functionName = function.split()[0]
+#     with SqliteDict(filename='/home/a/lembrary/fn_mod_dict.sqlite') as fmDict:
+#         if not functionName in fmDict:
+#             fmDict[functionName] = []
+#         modList = fmDict[functionName]
+#         modList.append(moduleName)
+#         fmDict[functionName] = modList
+#         fmDict.commit()
 
 
 @module.commands('print')
@@ -52,7 +63,7 @@ def printfun(bot, trigger):
         
     
     
-@module.commands('eval')
+@module.commands('eval', 'let')
 def eval(bot, trigger):
     expr = trigger.group(2)
     tokens = re.split('\W+', expr)
@@ -64,7 +75,11 @@ def eval(bot, trigger):
             if t in fmDict:
                 imports.append(fmDict[t][0])
 
-    moduleName = "Eval" + trigger.nick + str(int(1000*time.time()))
+    if trigger.group(1) == 'eval':
+        moduleName = "Eval" + trigger.nick + str(int(1000*time.time()))
+    else:
+        moduleName = trigger.nick + str(int(1000*time.time()))
+
     if re.search(r'\W', moduleName) != None:
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
         return
@@ -73,21 +88,35 @@ def eval(bot, trigger):
     for i in imports:
         contents += "import " + i + "\n"
 
-    contents += "main = print $ " + expr + "\n"
-    path = '/home/a/lembrary/' + moduleName + '.hs'
-    print("FILE CREATED: " + path)
-    
-    with open(path, "w+") as f:
-        f.write(contents)
+    if trigger.group(1) == 'eval':
+        contents += "main = print $ " + expr + "\n"
+    else:
+        contents += expr + "\n"
         
-    result = subprocess.run(['runghc', '-i/home/a/lembrary',  path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    path = '/home/a/lembrary/' + moduleName + '.hs'    
+    with open(path, "w+") as f:
+        print("FILE CREATED: " + path)
+        f.write(contents)
+
+    if trigger.group(1) == 'eval':
+        cmd = 'runghc'
+    else:
+        cmd = 'ghc'
+        
+    result = subprocess.run([cmd, '-i/home/a/lembrary',  path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     lines = result.stdout.decode('UTF-8').splitlines()
     for l in lines:
         bot.reply(l)
 
-
-
-    
+    if trigger.group(1) == 'let':
+        functionName = expr.split()[0]
+        with SqliteDict(filename='/home/a/lembrary/fn_mod_dict.sqlite') as fmDict:
+            if not functionName in fmDict:
+                fmDict[functionName] = []
+            modList = fmDict[functionName]
+            modList.append(moduleName)
+            fmDict[functionName] = modList
+            fmDict.commit()
 
 
     
