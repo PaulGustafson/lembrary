@@ -5,45 +5,6 @@ import subprocess
 from sqlitedict import SqliteDict
 
 
-# @module.commands('let')
-# def fundef(bot, trigger):
-#     function = trigger.group(2)
-#     moduleName = trigger.nick + str(int(1000*time.time()))
-#     if re.search(r'\W', moduleName) != None:
-#         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
-#         return
-
-#     tokens = re.split('\W+', expr)
-
-#     imports = []
-    
-#     with SqliteDict(filename='/home/a/lembrary/fn_mod_dict.sqlite') as fmDict:
-#         for t in tokens:
-#             if t in fmDict:
-#                 imports.append(fmDict[t][0])
-
-#     path = '/home/a/lembrary/' + moduleName + '.hs'
-    
-#     with open(path, "w+") as f:
-#         print("FILE CREATED: " + path)
-#         f.write("module " + moduleName + " where\n")
-#         for i in imports:
-#             f.write("import " + i + "\n")
-#         f.write(function + "\n")
-
-#     result = subprocess.run(['ghc', '-i/home/a/lembrary', path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-#     lines = result.stdout.decode('UTF-8').splitlines()
-#     for l in lines:
-#         bot.reply(l)
-
-#     functionName = function.split()[0]
-#     with SqliteDict(filename='/home/a/lembrary/fn_mod_dict.sqlite') as fmDict:
-#         if not functionName in fmDict:
-#             fmDict[functionName] = []
-#         modList = fmDict[functionName]
-#         modList.append(moduleName)
-#         fmDict[functionName] = modList
-#         fmDict.commit()
 
 
 @module.commands('print')
@@ -58,7 +19,7 @@ def printfun(bot, trigger):
         with open('/home/a/lembrary/' + moduleName + '.hs', 'r') as f:
             lines = f.read().splitlines()
 
-            for l in lines:
+            for l in lines[1:]:
                 bot.reply(l)
         
     
@@ -76,9 +37,9 @@ def eval(bot, trigger):
                 imports.append(fmDict[t][0])
 
     if trigger.group(1) == 'eval':
-        moduleName = "Eval" + trigger.nick + str(int(1000*time.time()))
+        moduleName = "Eval_" + trigger.nick + "_" + str(int(1000*time.time()))
     else:
-        moduleName = trigger.nick + str(int(1000*time.time()))
+        moduleName = "Fun_" + trigger.nick + "_" +  str(int(1000*time.time()))
 
     if re.search(r'\W', moduleName) != None:
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
@@ -105,8 +66,9 @@ def eval(bot, trigger):
         
     result = subprocess.run([cmd, '-i/home/a/lembrary',  path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     lines = result.stdout.decode('UTF-8').splitlines()
-    for l in lines:
-        bot.reply(l)
+    ans = '   '.join(lines)
+    bot.reply(ans)
+    
 
     if trigger.group(1) == 'let':
         functionName = expr.split()[0]
