@@ -34,7 +34,7 @@ def eval(bot, trigger):
     with SqliteDict(filename='/home/a/lembrary/fn_mod_dict.sqlite') as fmDict:
         for t in tokens:
             if t in fmDict:
-                imports.append(fmDict[t][0])
+                imports.append(fmDict[t][-1])
 
     if trigger.group(1) == 'eval':
         moduleName = "Eval_" + trigger.nick + "_" + str(int(1000*time.time()))
