@@ -1,0 +1,5 @@
+#!/bin/bash
+scp def.py haskell@irc.lembrary.com:~/.sopel/modules \
+    && ssh haskell@irc.lembrary.com /home/haskell/.local/bin/sopel
+
+

@@ -21,8 +21,7 @@ def printfun(bot, trigger):
 
             for l in lines[1:]:
                 bot.reply(l)
-        
-    
+
     
 @module.commands('eval', 'let')
 def eval(bot, trigger):
