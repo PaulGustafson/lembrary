@@ -27,19 +27,21 @@ def pin(bot, trigger):
 
 
     with SqliteDict(filename='lembrary/fn_mod_dict.sqlite') as fmDict:
-        if not functionName in fmDict or len(fmDict[functionName]) <= index:
-            bot.reply(functionName + " " + index + " not found.")
-            return
 
         with SqliteDict(filename='lembrary/pins.sqlite') as pinDict:
             if not trigger.nick in pinDict:
                 pinDict[trigger.nick] = [dict()]
 
+            if not functionName in fmDict:
+                bot.reply(trigger.group(2) + " not found.")
+                return
+                
             if len(tokens) > 1:
                 index = int(tokens[1])
             else:
                 index = len(fmDict[functionName]) - 1
-    
+
+            
             pinDict[trigger.nick][-1][functionName] = index
 
 @module.commands('pins')
