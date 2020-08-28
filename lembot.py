@@ -5,23 +5,51 @@ import subprocess
 from sqlitedict import SqliteDict
 
 
-
-
 @module.commands('print')
 def printfun(bot, trigger):
     functionName = trigger.group(2).split()[0]
-    with SqliteDict(filename='/home/a/lembrary/fn_mod_dict.sqlite') as fmDict:
+    with SqliteDict(filename='lembrary/fn_mod_dict.sqlite') as fmDict:
         if not functionName in fmDict or len(fmDict[functionName]) == 0:
             bot.reply(functionName + " not found.")
             return
-        moduleName = fmDict[functionName][0]
 
-        with open('/home/a/lembrary/' + moduleName + '.hs', 'r') as f:
-            lines = f.read().splitlines()
+        for (i, moduleName) in enumerate(fmDict[functionName]):
+            with open('lembrary/' + moduleName + '.hs', 'r') as f:
+                lines = f.read().splitlines()
 
-            for l in lines[1:]:
-                bot.reply(l)
+                for l in lines[1:]:
+                    bot.reply("i: " + l)
 
+@module.commands('pin')
+def pin(bot, trigger):
+    functionName = trigger.group(2).split()[0]
+    index = int(trigger.group(2).split()[1])
+    with SqliteDict(filename='lembrary/fn_mod_dict.sqlite') as fmDict:
+        if not functionName in fmDict or len(fmDict[functionName]) <= index:
+            bot.reply(functionName + " " + index + " not found.")
+            return
+
+        with SqliteDict(filename='lembrary/pins.sqlite') as pinDict:
+            if not trigger.nick in pinDict:
+                pinDict[trigger.nick] = dict()
+                
+            pinDict[trigger.nick][functionName] = index
+
+@module.commands('pins')
+def pins(bot, trigger): 
+    with SqliteDict(filename='lembrary/pins.sqlite') as pinDict:
+        if not trigger.nick in pinDict:
+            pinDict[trigger.nick] = dict()
+                
+        bot.reply("Pins: " + str(pinDict[trigger.nick]))
+
+@module.commands('clearpins')
+def clearpins(bot, trigger): 
+    with SqliteDict(filename='lembrary/pins.sqlite') as pinDict:
+        pinDict[trigger.nick] = dict()
+
+        bot.reply("Pins: " + str(pinDict[trigger.nick]))           
+    
     
 @module.commands('eval', 'let')
 def eval(bot, trigger):
@@ -30,10 +58,15 @@ def eval(bot, trigger):
 
     imports = []
     
-    with SqliteDict(filename='/home/a/lembrary/fn_mod_dict.sqlite') as fmDict:
+    with SqliteDict(filename='lembrary/fn_mod_dict.sqlite') as fmDict:
         for t in tokens:
             if t in fmDict:
-                imports.append(fmDict[t][-1])
+                with SqliteDict(filename='lembrary/pins.sqlite') as pinDict:
+                    if trigger.nick in pinDict and t in pinDict[trigger.nick]:
+                        imports.append(fmDict[t][pinDict[trigger.nick]])
+                    else:
+                        imports.append(fmDict[t][-1])
+
 
     if trigger.group(1) == 'eval':
         moduleName = "Eval_" + trigger.nick + "_" + str(int(1000*time.time()))
@@ -44,7 +77,7 @@ def eval(bot, trigger):
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
         return
 
-    contents = "module " + moduleName + " where\n" 
+    contents = "module " + moduleName + "where \n" 
     for i in imports:
         contents += "import " + i + "\n"
 
@@ -53,7 +86,7 @@ def eval(bot, trigger):
     else:
         contents += expr + "\n"
         
-    path = '/home/a/lembrary/' + moduleName + '.hs'    
+    path = 'lembrary/' + moduleName + '.hs'    
     with open(path, "w+") as f:
         print("FILE CREATED: " + path)
         f.write(contents)
@@ -63,7 +96,7 @@ def eval(bot, trigger):
     else:
         cmd = 'ghc'
         
-    result = subprocess.run([cmd, '-i/home/a/lembrary',  path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    result = subprocess.run([cmd, '-ilembrary',  path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     lines = result.stdout.decode('UTF-8').splitlines()
     ans = '   '.join(lines)
     bot.reply(ans)
@@ -71,7 +104,7 @@ def eval(bot, trigger):
 
     if trigger.group(1) == 'let':
         functionName = expr.split()[0]
-        with SqliteDict(filename='/home/a/lembrary/fn_mod_dict.sqlite') as fmDict:
+        with SqliteDict(filename='lembrary/fn_mod_dict.sqlite') as fmDict:
             if not functionName in fmDict:
                 fmDict[functionName] = []
             modList = fmDict[functionName]
