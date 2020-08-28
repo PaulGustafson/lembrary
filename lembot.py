@@ -18,12 +18,16 @@ def printfun(bot, trigger):
                 lines = f.read().splitlines()
 
                 for l in lines[1:]:
-                    bot.reply("i: " + l)
+                    bot.reply(str(i) + ": " + l)
 
 @module.commands('pin')
 def pin(bot, trigger):
-    functionName = trigger.group(2).split()[0]
-    index = int(trigger.group(2).split()[1])
+    tokens = trigger.group(2).split()
+    functionName = tokens[0]
+    index = -1
+    if len(tokens) > 1:
+        index = int(tokens[2])
+
     with SqliteDict(filename='lembrary/fn_mod_dict.sqlite') as fmDict:
         if not functionName in fmDict or len(fmDict[functionName]) <= index:
             bot.reply(functionName + " " + index + " not found.")
