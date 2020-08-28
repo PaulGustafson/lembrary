@@ -37,15 +37,15 @@ def pin(bot, trigger):
             if not trigger.nick in pinDict:
                 pinDict[trigger.nick] = [dict()]
                 
-            pinDict[trigger.nick][functionName] = index
+            pinDict[trigger.nick][-1][functionName] = index
 
 @module.commands('pins')
 def pins(bot, trigger): 
     with SqliteDict(filename='lembrary/pins.sqlite') as pinDict:
         if not trigger.nick in pinDict:
-            pinDict[trigger.nick] = dict()
+            pinDict[trigger.nick] = [dict()]
                 
-        bot.reply("Pins " + str(len(pinDict[trigger.nick]) - 1) + " = " + str(pinDict[trigger.nick]))
+        bot.reply("Pins " + str(len(pinDict[trigger.nick]) - 1) + " = " + str(pinDict[trigger.nick][-1]))
 
 @module.commands('newpins')
 def newpins(bot, trigger): 
@@ -70,7 +70,7 @@ def loadpins(bot, trigger):
         if nick in pinDict and len(pinDict[nick]) > pinSetIndex:
             pins = pinDict[nick][pinSetIndex].copy()
             if not trigger.nick in pinDict:
-                pinDict[trigger.nick] = pins
+                pinDict[trigger.nick] = [pins]
             else:
                 pinDict[trigger.nick].append(pins)
 
@@ -82,11 +82,12 @@ def loadpins(bot, trigger):
 @module.commands('eval', 'let')
 def eval(bot, trigger):
     expr = trigger.group(2)        
-    tokens = re.split('\W+', expr)
     
-    if trigger.group(1) == 'let':
-        eqSign = tokens.index('=')
-        tokens = tokens[eqSign+1:]
+    if trigger.group(1) == 'eval':
+        tokens = re.split('\W+', expr)
+    else:
+        eqSign = expr.index('=')
+        tokens = re.split('\W+', expr[eqSign:])
         
     imports = []
     
