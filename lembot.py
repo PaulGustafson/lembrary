@@ -10,18 +10,28 @@ import shutil
 @module.commands('print')
 def printfun(bot, trigger):
     functionName = trigger.group(2).split()[0]
+
+    pin = -1
+    with SqliteDict(filename='lembrary/ws_' + trigger.nick + '.sqlite') as pinDict:
+        if functionName in pinDict:
+            pin = pinDict[functionName]
+            
     with SqliteDict(filename='lembrary/fn_mod_dict.sqlite') as fmDict:
         if not functionName in fmDict or len(fmDict[functionName]) == 0:
             bot.reply(functionName + " not found.")
             return
 
-        for (i, moduleName) in enumerate(fmDict[functionName]):
-            with open('lembrary/' + moduleName + '.hs', 'r') as f:
-                lines = f.read().splitlines()
+            for (i, moduleName) in enumerate(fmDict[functionName]):
+                with open('lembrary/' + moduleName + '.hs', 'r') as f:
+                    lines = f.read().splitlines()
 
-                for l in lines[1:]:
-                    bot.reply(str(i) + ": " + l)
+                    for l in lines[1:]:
+                        if i == pin:
+                            bot.reply(str(i) + "*: " + l)
+                        else:
+                            bot.reply(str(i) + " : " + l)
 
+                        
 @module.commands('pin')
 def pin(bot, trigger):
     tokens = trigger.group(2).split()
@@ -52,7 +62,10 @@ def pin(bot, trigger):
 @module.commands('pins')
 def pins(bot, trigger): 
     with SqliteDict(filename='lembrary/ws_' + trigger.nick + '.sqlite') as pinDict:
-        bot.reply("Pins:" + str(pinDict))
+        ans = "Pins: "
+        for k in pinDict.keys():
+            ans += "(" + k + " " + str(pinDict[k]) + ") "
+        bot.reply(ans)
 
 @module.commands('new_workspace')
 def newpins(bot, trigger):
@@ -63,7 +76,7 @@ def newpins(bot, trigger):
 
 @module.commands('save_workspace')
 def saveWorkspace(bot,trigger):
-    dest = trigger.nick + "_" + str(int(1000*time.time()) 
+    dest = trigger.nick + "_" + str(int(1000*time.time())) 
     shutil.copy("lembrary/ws_" + trigger.nick + ".sqlite",
                 "lembrary/savedWs_" + dest + + ".sqlite")
     bot.reply("Saved workspace: " + dest)
