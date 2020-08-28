@@ -44,7 +44,7 @@ def pins(bot, trigger):
         bot.reply("Pins " + str(len(pinDict[trigger.nick]) - 1) + " = " + str(pinDict[trigger.nick]))
 
 @module.commands('newpins')
-def clearpins(bot, trigger): 
+def newpins(bot, trigger): 
     with SqliteDict(filename='lembrary/pins.sqlite') as pinDict:
         if not trigger.nick in pinDict:
             pinDict[trigger.nick] = [dict()]
@@ -101,7 +101,7 @@ def eval(bot, trigger):
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
         return
 
-    contents = "module " + moduleName + "where \n" 
+    contents = "module " + moduleName + " where \n" 
     for i in imports:
         contents += "import " + i + "\n"
 
