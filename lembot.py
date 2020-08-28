@@ -85,8 +85,8 @@ def eval(bot, trigger):
     tokens = re.split('\W+', expr)
     
     if trigger.group(1) == 'let':
-        eqSign = tokens.index['=']
-        tokens = tokens[eqSign + 1:]
+        eqSign = tokens.index('=')
+        tokens = tokens[eqSign+1:]
         
     imports = []
     
