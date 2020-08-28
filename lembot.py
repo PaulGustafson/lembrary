@@ -81,13 +81,13 @@ def loadpins(bot, trigger):
 # TODO: mutual recursion?    
 @module.commands('eval', 'let')
 def eval(bot, trigger):
-    if trigger.group(1) == 'eval':
-        expr = trigger.group(2)
-    else:
-        expr = trigger.group(2).split('=')[1]
-        
+    expr = trigger.group(2)        
     tokens = re.split('\W+', expr)
-
+    
+    if trigger.group(1) == 'let':
+        eqSign = tokens.index['=']
+        tokens = tokens[eqSign + 1:]
+        
     imports = []
     
     with SqliteDict(filename='lembrary/fn_mod_dict.sqlite') as fmDict:
