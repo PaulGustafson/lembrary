@@ -24,9 +24,7 @@ def printfun(bot, trigger):
 def pin(bot, trigger):
     tokens = trigger.group(2).split()
     functionName = tokens[0]
-    index = -1
-    if len(tokens) > 1:
-        index = int(tokens[2])
+
 
     with SqliteDict(filename='lembrary/fn_mod_dict.sqlite') as fmDict:
         if not functionName in fmDict or len(fmDict[functionName]) <= index:
@@ -36,7 +34,12 @@ def pin(bot, trigger):
         with SqliteDict(filename='lembrary/pins.sqlite') as pinDict:
             if not trigger.nick in pinDict:
                 pinDict[trigger.nick] = [dict()]
-                
+
+            if len(tokens) > 1:
+                index = int(tokens[1])
+            else:
+                index = len(fmDict[functionName]) - 1
+    
             pinDict[trigger.nick][-1][functionName] = index
 
 @module.commands('pins')
