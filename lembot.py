@@ -31,7 +31,7 @@ def pin(bot, trigger):
 
         with SqliteDict(filename='lembrary/pins.sqlite') as pinDict:
             if not trigger.nick in pinDict:
-                pinDict[trigger.nick] = dict()
+                pinDict[trigger.nick] = [dict()]
                 
             pinDict[trigger.nick][functionName] = index
 
@@ -41,15 +41,39 @@ def pins(bot, trigger):
         if not trigger.nick in pinDict:
             pinDict[trigger.nick] = dict()
                 
-        bot.reply("Pins: " + str(pinDict[trigger.nick]))
+        bot.reply("Pins " + str(len(pinDict[trigger.nick]) - 1) + " = " + str(pinDict[trigger.nick]))
 
-@module.commands('clearpins')
+@module.commands('newpins')
 def clearpins(bot, trigger): 
     with SqliteDict(filename='lembrary/pins.sqlite') as pinDict:
-        pinDict[trigger.nick] = dict()
+        if not trigger.nick in pinDict:
+            pinDict[trigger.nick] = [dict()]
+        else:
+            pinDict[trigger.nick].append(dict())
+            
+    pins(bot, trigger)
 
-        bot.reply("Pins: " + str(pinDict[trigger.nick]))           
+@module.commands('loadpins')
+def loadpins(bot, trigger):
+    tokens = trigger.group(2).split()
+    pinIndex = int(tokens[0])
+    if len(tokens > 1):
+        nick = tokens[1]
+    else:
+        nick = trigger.nick
     
+    with SqliteDict(filename='lembrary/pins.sqlite') as pinDict:
+        if nick in pinDict and len(pinDict[nick]) > pinSetIndex:
+            pins = pinDict[nick][pinSetIndex].copy()
+            if not trigger.nick in pinDict:
+                pinDict[trigger.nick] = pins
+            else:
+                pinDict[trigger.nick].append(pins)
+
+    pins(bot, trigger)
+            
+        
+        
     
 @module.commands('eval', 'let')
 def eval(bot, trigger):
