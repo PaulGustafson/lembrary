@@ -3,6 +3,8 @@ import time
 import re
 import subprocess
 from sqlitedict import SqliteDict
+import os
+import shutil
 
 
 @module.commands('print')
@@ -28,10 +30,7 @@ def pin(bot, trigger):
 
     with SqliteDict(filename='lembrary/fn_mod_dict.sqlite') as fmDict:
 
-        with SqliteDict(filename='lembrary/pins.sqlite') as pinDict:
-            if not trigger.nick in pinDict:
-                pinDict[trigger.nick] = [dict()]
-
+        with SqliteDict(filename='lembrary/ws_' + trigger.nick + '.sqlite') as pinDict:
             if not functionName in fmDict:
                 bot.reply(trigger.group(2) + " not found.")
                 return
@@ -41,45 +40,41 @@ def pin(bot, trigger):
             else:
                 index = len(fmDict[functionName]) - 1
 
+            if len(fmDict[functionName]) <= index:
+                bot.reply(trigger.group(2) + " not found.")
+                return
             
-            pinDict[trigger.nick][-1][functionName] = index
+            pinDict[functionName] = index
+            bot.reply(functionName + " " + str(index) + " pinned.")
+            pinDict.commit()
 
+            
 @module.commands('pins')
 def pins(bot, trigger): 
-    with SqliteDict(filename='lembrary/pins.sqlite') as pinDict:
-        if not trigger.nick in pinDict:
-            pinDict[trigger.nick] = [dict()]
-                
-        bot.reply("Pins " + str(len(pinDict[trigger.nick]) - 1) + " = " + str(pinDict[trigger.nick][-1]))
+    with SqliteDict(filename='lembrary/ws_' + trigger.nick + '.sqlite') as pinDict:
+        bot.reply("Pins:" + str(pinDict))
 
-@module.commands('newpins')
-def newpins(bot, trigger): 
-    with SqliteDict(filename='lembrary/pins.sqlite') as pinDict:
-        if not trigger.nick in pinDict:
-            pinDict[trigger.nick] = [dict()]
-        else:
-            pinDict[trigger.nick].append(dict())
-            
-    pins(bot, trigger)
+@module.commands('new_workspace')
+def newpins(bot, trigger):
+    saveWorkspace(bot, trigger)
+    os.remove('lembrary/ws_' + trigger.nick + '.sqlite')
+    bot.reply('Workspace cleared.')
+   
 
-@module.commands('loadpins')
-def loadpins(bot, trigger):
-    tokens = trigger.group(2).split()
-    pinIndex = int(tokens[0])
-    if len(tokens > 1):
-        nick = tokens[1]
-    else:
-        nick = trigger.nick
+@module.commands('save_workspace')
+def saveWorkspace(bot,trigger):
+    dest = trigger.nick + "_" + str(int(1000*time.time()) 
+    shutil.copy("lembrary/ws_" + trigger.nick + ".sqlite",
+                "lembrary/savedWs_" + dest + + ".sqlite")
+    bot.reply("Saved workspace: " + dest)
+        
     
-    with SqliteDict(filename='lembrary/pins.sqlite') as pinDict:
-        if nick in pinDict and len(pinDict[nick]) > pinSetIndex:
-            pins = pinDict[nick][pinSetIndex].copy()
-            if not trigger.nick in pinDict:
-                pinDict[trigger.nick] = [pins]
-            else:
-                pinDict[trigger.nick].append(pins)
-
-    pins(bot, trigger)
+@module.commands('load_workspace')
+def loadWorkspace(bot, trigger):
+    dest = trigger.group(2)
+    shutil.copy("lembrary/savedWs_" + dest + + ".sqlite",
+                "lembrary/ws_" + trigger.nick + ".sqlite")
+    bot.reply("Loaded workspace: " + dest)
             
         
         
@@ -99,7 +94,7 @@ def eval(bot, trigger):
     with SqliteDict(filename='lembrary/fn_mod_dict.sqlite') as fmDict:
         for t in tokens:
             if t in fmDict:
-                with SqliteDict(filename='lembrary/pins.sqlite') as pinDict:
+                with SqliteDict(filename='lembrary/ws_' + trigger.nick + '.sqlite') as pinDict:
                     if trigger.nick in pinDict and t in pinDict[trigger.nick]:
                         imports.append(fmDict[t][pinDict[trigger.nick]])
                     else:
