@@ -78,10 +78,14 @@ def loadpins(bot, trigger):
             
         
         
-    
+# TODO: mutual recursion?    
 @module.commands('eval', 'let')
 def eval(bot, trigger):
-    expr = trigger.group(2)
+    if trigger.group(1) == 'eval':
+        expr = trigger.group(2)
+    else:
+        expr = trigger.group(2).split('=')[1]
+        
     tokens = re.split('\W+', expr)
 
     imports = []
