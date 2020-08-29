@@ -77,16 +77,16 @@ def newpins(bot, trigger):
 
 @module.commands('save_workspace')
 def saveWorkspace(bot,trigger):
-    dest = trigger.nick + "_" + str(int(1000*time.time())) 
+    dest = trigger.nick + "_" + str(int(1000*time.time()))
     shutil.copy("lembrary/ws_" + trigger.nick + ".sqlite",
-                "lembrary/savedWs_" + dest + + ".sqlite")
+                "lembrary/savedWs_" + dest + ".sqlite")
     bot.reply("Saved workspace: " + dest)
         
     
 @module.commands('load_workspace')
 def loadWorkspace(bot, trigger):
     dest = trigger.group(2)
-    shutil.copy("lembrary/savedWs_" + dest + + ".sqlite",
+    shutil.copy("lembrary/savedWs_" + dest + ".sqlite",
                 "lembrary/ws_" + trigger.nick + ".sqlite")
     bot.reply("Loaded workspace: " + dest)
             
