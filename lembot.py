@@ -21,15 +21,15 @@ def printfun(bot, trigger):
             bot.reply(functionName + " not found.")
             return
 
-            for (i, moduleName) in enumerate(fmDict[functionName]):
-                with open('lembrary/' + moduleName + '.hs', 'r') as f:
-                    lines = f.read().splitlines()
-
-                    for l in lines[1:]:
-                        if i == pin:
-                            bot.reply(str(i) + "*: " + l)
-                        else:
-                            bot.reply(str(i) + " : " + l)
+        for (i, moduleName) in enumerate(fmDict[functionName]):
+            with open('lembrary/' + moduleName + '.hs', 'r') as f:
+                lines = f.read().splitlines()
+                
+                for l in lines[1:]:
+                    if i == pin:
+                        bot.reply(str(i) + "*: " + l)
+                    else:
+                        bot.reply(str(i) + " : " + l)
 
                         
 @module.commands('pin')
@@ -55,8 +55,9 @@ def pin(bot, trigger):
                 return
             
             pinDict[functionName] = index
-            bot.reply(functionName + " " + str(index) + " pinned.")
             pinDict.commit()
+            bot.reply(functionName + " " + str(index) + " pinned.")
+
 
             
 @module.commands('pins')
@@ -108,8 +109,8 @@ def eval(bot, trigger):
         for t in tokens:
             if t in fmDict:
                 with SqliteDict(filename='lembrary/ws_' + trigger.nick + '.sqlite') as pinDict:
-                    if trigger.nick in pinDict and t in pinDict[trigger.nick]:
-                        imports.append(fmDict[t][pinDict[trigger.nick]])
+                    if t in pinDict:
+                        imports.append(fmDict[t][pinDict[t]])
                     else:
                         imports.append(fmDict[t][-1])
 
