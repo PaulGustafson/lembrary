@@ -7,11 +7,25 @@ import os
 import shutil
 
 
-@module.commands('printall')
-def printall(bot, trigger):
+@module.commands('info')
+def info(bot,trigger):
     """
-    Prints all definitions of a given function name. An
-    asterisk denotes a pin.
+    Prints information about commands.  Example: ".info eval" prints information about the "eval" command. 
+    """
+    cmds = ["eval", "let", "show", "show_all", "pin", "pins", "save_pins", "load_pins", "clear_pins", "info"]
+    if trigger.group(2):
+        c = trigger.group(2).lower().strip()
+        if c in cmds:
+            bot.reply(globals()[c].__doc__)
+    else:
+        bot.reply("Commands: " + ", ".join(cmds))
+        bot.reply('Type ".info <command>" for more information about a specific command.')
+
+        
+@module.commands('show_all')
+def show_all(bot, trigger):
+    """
+    Shows all definitions of a given function name. An asterisk denotes a pin.
     """
     functionName = trigger.group(2).split()[0]
 
@@ -35,12 +49,10 @@ def printall(bot, trigger):
                     bot.reply("(" + str(i) + ")    " + lines[-1])
 
             
-@module.commands('print')
-def printFun(bot, trigger):
+@module.commands('show')
+def show(bot, trigger):
     """ 
-    Prints the currently active definition of a function name.  This is
-    the pinned definition if it exists.  Otherwise, it is the last-defined
-    definition.
+    Show the currently active definition of a function name.  This is the pinned definition if it exists.  Otherwise, it is the last-defined definition.
     """
     functionName = trigger.group(2).split()[0]
     
@@ -65,7 +77,7 @@ def printFun(bot, trigger):
 @module.commands('pin')
 def pin(bot, trigger):
     """
-    Pins a name to a specified definition.  
+    Pins a name to a specified definition.  Example: suppose '.show_all x' outputs three definitions "0: x = -1", "1: x = 2", and "2: x = 5". Then ".pin x 0" will make all (non-shadowed) occurrences of "x" evaluate to -1.  
     """
     tokens = trigger.group(2).split()
     functionName = tokens[0]
@@ -96,7 +108,7 @@ def pin(bot, trigger):
 @module.commands('pins')
 def pins(bot, trigger):
     """
-    Prints all of your currently active pins.
+    Prints all of your currently active pins. Type ".info pin" for more information about pins.
     """
     with SqliteDict(filename='/home/haskell/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
         ans = "Pins: "
@@ -107,7 +119,7 @@ def pins(bot, trigger):
 @module.commands('clear_pins')
 def new_pins(bot, trigger):
     """
-    Clears all pins after saving a backup.
+    Clears all pins after saving a backup.  Type ".info pin" for more information about pins.
     """
     save_pins(bot, trigger)
     os.remove('/home/haskell/lembrary/pins/' + trigger.nick + '.sqlite')
@@ -117,7 +129,7 @@ def new_pins(bot, trigger):
 @module.commands('save_pins')
 def save_pins(bot,trigger):
     """
-    Saves your current pins.
+    Saves your current pins.  Type ".info pin" for more information about pins.
     """
     dest = trigger.nick + "_" + str(int(1000*time.time()))
     shutil.copy("/home/haskell/lembrary/pins/" + trigger.nick + ".sqlite",
@@ -128,7 +140,7 @@ def save_pins(bot,trigger):
 @module.commands('load_pins')
 def load_pins(bot, trigger):
     """
-    Load previously saved pins.
+    Load previously saved pins.  Type ".info pin" for more information about pins.
     """
     dest = trigger.group(2)
     shutil.copy("/home/haskell/lembrary/savedPins/" + dest + ".sqlite",
@@ -140,7 +152,7 @@ def load_pins(bot, trigger):
 @module.commands('eval')
 def eval(bot, trigger):
     """
-    Evaluate an expression.
+    Evaluate an expression in Haskell.  Can use previously ".let" defined functions. Example: ".eval 2 + 3".
     """
     expr = trigger.group(2)                   
     imports = []
@@ -186,7 +198,7 @@ def eval(bot, trigger):
 @module.commands('let')
 def let(bot, trigger):
     """
-    Define a function.
+    Define a function in Haskell notation. Example: ".let cat x y = x ++ y" concatenates strings.
     """
     expr = trigger.group(2)        
     
