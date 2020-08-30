@@ -215,9 +215,9 @@ def let(bot, trigger):
                         imports.append(fmDict[t][-1])
 
         if functionName in fmDict:
-            moduleName = "Def_" + functionName "_" +  len(functionName[fmDict])
+            moduleName = "Def_" + functionName + "_" +  len(functionName[fmDict])
         else:
-            moduleName = "Def_" + functionName "_" +  len(functionName[fmDict])
+            moduleName = "Def_" + functionName + "_0" 
 
     if re.search(r'\W', moduleName) != None:
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
