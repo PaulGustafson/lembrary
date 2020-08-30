@@ -31,16 +31,11 @@ def printall(bot, trigger):
                 lines = f.read().splitlines()
 
                 if i == pin:
-                    bot.reply(functionName + " " + str(i) + "*: ")
+                    bot.reply("(" + str(i) + ")*   " + lines[-1])
                 else:
-                    bot.reply(functionName + " " + str(i) + ": " )
+                    bot.reply("(" + str(i) + ")    " + lines[-1])
 
-                
-                for l in lines:
-                    bot.reply(l)
-
-                bot.reply("")
-
+            
 @module.commands('print')
 def printFun(bot, trigger):
     """ 
