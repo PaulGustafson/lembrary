@@ -10,8 +10,8 @@ import shutil
 @module.commands('printall')
 def printall(bot, trigger):
     """
-    Prints all definitions of a given function name. The pinned definition (if
-    it exists) will be annotated with an asterisk.
+    Prints all definitions of a given function name. An
+    asterisk denotes a pin.
 
     """
     functionName = trigger.group(2).split()[0]
@@ -201,7 +201,8 @@ def let(bot, trigger):
     
     eqSign = expr.index('=')
     tokens = re.split('\W+', expr[eqSign:])
-        
+    functionName = expr[:eqSign].split()[0]
+    
     imports = []
     
     with SqliteDict(filename='lembrary/fn_mod_dict.sqlite') as fmDict:
@@ -213,9 +214,10 @@ def let(bot, trigger):
                     else:
                         imports.append(fmDict[t][-1])
 
-
-    
-    moduleName = "Def_" + fun + "_" +  str(int(1000*time.time()))
+        if functionName in fmDict:
+            moduleName = "Def_" + functionName "_" +  len(functionName[fmDict])
+        else:
+            moduleName = "Def_" + functionName "_" +  len(functionName[fmDict])
 
     if re.search(r'\W', moduleName) != None:
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
@@ -235,27 +237,21 @@ def let(bot, trigger):
         print("FILE CREATED: " + path)
         f.write(contents)
 
-    if trigger.group(1) == 'eval':
-        cmd = 'runghc'
-    else:
-        cmd = 'ghc'
-        
+    with SqliteDict(filename='lembrary/fn_mod_dict.sqlite') as fmDict:
+        if not functionName in fmDict:
+            fmDict[functionName] = []
+            modList = fmDict[functionName]
+            modList.append(moduleName)
+            fmDict[functionName] = modList
+            fmDict.commit()
+
+    cmd = 'ghc'    
     result = subprocess.run([cmd, '-ilembrary',  path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     lines = result.stdout.decode('UTF-8').splitlines()
 
-    if len(lines) == 1:
-        functionName = expr[:eqSign].split()[0]
-        with SqliteDict(filename='lembrary/fn_mod_dict.sqlite') as fmDict:
-            if not functionName in fmDict:
-                fmDict[functionName] = []
-                modList = fmDict[functionName]
-                modList.append(moduleName)
-                fmDict[functionName] = modList
-                fmDict.commit()
+    ans = '   '.join(lines)
+    bot.reply(ans)
 
-    else:
-        ans = '   '.join(lines)
-        bot.reply(ans)
     
 
     
