@@ -31,9 +31,9 @@ def printall(bot, trigger):
                 lines = f.read().splitlines()
 
                 if i == pin:
-                    bot.reply(functionName + " " + i + "*: ")
+                    bot.reply(functionName + " " + str(i) + "*: ")
                 else:
-                    bot.reply(functionName + " " + i + ": " )
+                    bot.reply(functionName + " " + str(i) + ": " )
 
                 
                 for l in lines:
