@@ -42,7 +42,7 @@ def printall(bot, trigger):
                 bot.reply("")
 
 @module.commands('print')
-def print(bot, trigger):
+def printFun(bot, trigger):
     """ 
     Prints the currently active definition of a function name.  This is
     the pinned definition if it exists.  Otherwise, it is the last-defined
