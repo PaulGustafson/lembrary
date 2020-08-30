@@ -215,7 +215,7 @@ def let(bot, trigger):
                         imports.append(fmDict[t][-1])
 
         if functionName in fmDict:
-            moduleName = "Def_" + functionName + "_" +  len(fmDict[functionName])
+            moduleName = "Def_" + functionName + "_" +  str(len(fmDict[functionName]))
         else:
             moduleName = "Def_" + functionName + "_0" 
 
