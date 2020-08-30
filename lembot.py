@@ -127,7 +127,7 @@ def save_pins(bot,trigger):
         
     
 @module.commands('load_pins')
-def loadWorkspace(bot, trigger):
+def load_pins(bot, trigger):
     """
     Load previously saved pins.
     """
@@ -193,14 +193,15 @@ def let(bot, trigger):
     
     eqSign = expr.index('=')
 
-    functionName = expr[:eqSign].split()[0]
+    args = expr[:eqSign].split()
+    functionName = args[0]
     
     imports = []
     
     with SqliteDict(filename='/home/haskell/lembrary/fn_mod_dict.sqlite') as fmDict:
         tokens = set(re.split('\W+', expr[eqSign:]))
         for t in tokens:
-            if t in fmDict:
+            if t in fmDict and not t in args:
                 with SqliteDict(filename='/home/haskell/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
                     if t in pinDict:
                         imports.append(fmDict[t][pinDict[t]])
@@ -208,7 +209,7 @@ def let(bot, trigger):
                         imports.append(fmDict[t][-1])
 
         if functionName in fmDict:
-            moduleName = "Def_" + functionName + "_" +  str(len(fmDict[functionName]))  #FIXME: not incrementing
+            moduleName = "Def_" + functionName + "_" +  str(len(fmDict[functionName])) 
         else:
             moduleName = "Def_" + functionName + "_0" 
 
