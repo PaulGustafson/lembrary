@@ -143,14 +143,11 @@ def eval(bot, trigger):
     """
     Evaluate an expression.
     """
-    expr = trigger.group(2)        
-    
-
-    tokens = re.split('\W+', expr)
-            
+    expr = trigger.group(2)                   
     imports = []
     
     with SqliteDict(filename='/home/haskell/lembrary/fn_mod_dict.sqlite') as fmDict:
+        tokens = set(re.split('\W+', expr))
         for t in tokens:
             if t in fmDict:
                 with SqliteDict(filename='/home/haskell/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
@@ -195,12 +192,13 @@ def let(bot, trigger):
     expr = trigger.group(2)        
     
     eqSign = expr.index('=')
-    tokens = re.split('\W+', expr[eqSign:])
+
     functionName = expr[:eqSign].split()[0]
     
     imports = []
     
     with SqliteDict(filename='/home/haskell/lembrary/fn_mod_dict.sqlite') as fmDict:
+        tokens = set(re.split('\W+', expr[eqSign:]))
         for t in tokens:
             if t in fmDict:
                 with SqliteDict(filename='/home/haskell/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
