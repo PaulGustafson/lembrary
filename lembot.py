@@ -12,7 +12,6 @@ def printall(bot, trigger):
     """
     Prints all definitions of a given function name. An
     asterisk denotes a pin.
-
     """
     functionName = trigger.group(2).split()[0]
 
