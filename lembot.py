@@ -215,7 +215,7 @@ def let(bot, trigger):
                         imports.append(fmDict[t][-1])
 
         if functionName in fmDict:
-            moduleName = "Def_" + functionName + "_" +  str(len(fmDict[functionName]))
+            moduleName = "Def_" + functionName + "_" +  str(len(fmDict[functionName]))  #FIXME: not incrementing
         else:
             moduleName = "Def_" + functionName + "_0" 
 
@@ -240,10 +240,10 @@ def let(bot, trigger):
     with SqliteDict(filename='lembrary/fn_mod_dict.sqlite') as fmDict:
         if not functionName in fmDict:
             fmDict[functionName] = []
-            modList = fmDict[functionName]
-            modList.append(moduleName)
-            fmDict[functionName] = modList
-            fmDict.commit()
+        modList = fmDict[functionName]
+        modList.append(moduleName)
+        fmDict[functionName] = modList
+        fmDict.commit()
 
     cmd = 'ghc'    
     result = subprocess.run([cmd, '-ilembrary',  path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
