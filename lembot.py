@@ -7,8 +7,8 @@ import os
 import shutil
 
 
-@module.commands('print')
-def printfun(bot, trigger):
+@module.commands('printall')
+def printall(bot, trigger):
     functionName = trigger.group(2).split()[0]
 
     pin = -1
@@ -24,13 +24,39 @@ def printfun(bot, trigger):
         for (i, moduleName) in enumerate(fmDict[functionName]):
             with open('lembrary/' + moduleName + '.hs', 'r') as f:
                 lines = f.read().splitlines()
-                
-                for l in lines[1:]:
-                    if i == pin:
-                        bot.reply(str(i) + "*: " + l)
-                    else:
-                        bot.reply(str(i) + " : " + l)
 
+                if i == pin:
+                    bot.reply("(Pinned) " + functionName + " " + i " : ")
+                else:
+                    bot.reply(functionName + " " + i ": " )
+
+                
+                for l in lines:
+                    bot.reply( l)
+
+                bot.reply("")
+
+@module.commands('print')
+def print(bot, trigger):
+    functionName = trigger.group(2).split()[0]
+    
+    pin = -1
+    with SqliteDict(filename='lembrary/ws_' + trigger.nick + '.sqlite') as pinDict:
+        if functionName in pinDict:
+            pin = pinDict[functionName]
+            
+    with SqliteDict(filename='lembrary/fn_mod_dict.sqlite') as fmDict:
+        if not functionName in fmDict or len(fmDict[functionName]) == 0:
+            bot.reply(functionName + " not found.")
+            return
+
+        moduleName = fmDict[functionName][pin]
+        with open('lembrary/' + moduleName + '.hs', 'r') as f:
+            lines = f.read().splitlines()
+            
+            bot.reply(lines[-1])
+
+                        
                         
 @module.commands('pin')
 def pin(bot, trigger):
