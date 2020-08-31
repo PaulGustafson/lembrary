@@ -190,7 +190,7 @@ def eval(bot, trigger):
         f.write(contents)
 
         
-    cmd = 'runghc'
+    cmd = 'GHCRTS="-M10m" runghc'
             
     result = subprocess.run([cmd, '-ilembrary',  path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     lines = result.stdout.decode('UTF-8').splitlines()
@@ -259,7 +259,7 @@ def let(bot, trigger):
         fmDict[functionName] = modList
         fmDict.commit()
 
-    cmd = 'ghc'    
+    cmd = 'ghc -rtsopts'    
     result = subprocess.run([cmd, '-i/home/haskell/lembrary',  path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     lines = result.stdout.decode('UTF-8').splitlines()
 
