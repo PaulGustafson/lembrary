@@ -192,7 +192,7 @@ def eval(bot, trigger):
         
     cmd = 'runghc2'
             
-    result = subprocess.run([cmd, '-ilembrary',  path], timeout=10, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    result = subprocess.run([cmd, '-ilembrary',  path], timeout=5, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     lines = result.stdout.decode('UTF-8').splitlines()
     ans = '   '.join(lines)
     bot.reply(ans)
