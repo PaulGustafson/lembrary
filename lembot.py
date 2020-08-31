@@ -191,11 +191,14 @@ def eval(bot, trigger):
 
         
     cmd = 'runghc2'
-            
-    result = subprocess.run([cmd, '-ilembrary',  path], timeout=5, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    lines = result.stdout.decode('UTF-8').splitlines()
-    ans = '   '.join(lines)
-    bot.reply(ans)
+
+    try:
+        result = subprocess.run([cmd, '-ilembrary',  path], timeout=2, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        lines = result.stdout.decode('UTF-8').splitlines()
+        ans = '   '.join(lines)
+        bot.reply(ans)
+    except:
+        bot.reply('Time limit exceeded.')
     
 
 @module.commands('let')
