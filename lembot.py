@@ -18,8 +18,8 @@ def info(bot,trigger):
         if c in cmds:
             bot.reply(globals()[c].__doc__)
     else:
-        bot.reply("Commands: " + ", ".join(cmds))
-        bot.reply('Type ".info <command>" for more information about a specific command.')
+        bot.say("Commands: " + ", ".join(cmds))
+        bot.say('Type ".info <command>" for more information about a specific command.')
 
         
 @module.commands('show_all')
@@ -27,7 +27,10 @@ def show_all(bot, trigger):
     """
     Shows all definitions of a given function name. An asterisk denotes a pin.
     """
-    functionName = trigger.group(2).split()[0]
+    if trigger.group(2):
+        functionName = trigger.group(2).split()[0]
+    else:
+        bot.reply("Example: '.show_all x' prints all definitions of functions named 'x'")
 
     pin = -1
     with SqliteDict(filename='/home/haskell/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
@@ -152,7 +155,7 @@ def load_pins(bot, trigger):
 @module.commands('eval')
 def eval(bot, trigger):
     """
-    Evaluate an expression in Haskell.  Can use previously ".let" defined functions. Example: ".eval 2 + 3".
+    Evaluate an expression in Haskell.  Can use previously ".let"-defined functions. Example: ".eval 2 + 3".
     """
     expr = trigger.group(2)                   
     imports = []
