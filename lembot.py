@@ -203,11 +203,17 @@ def let(bot, trigger):
     """
     Define a function in Haskell notation. Example: ".let cat x y = x ++ y" concatenates strings.
     """
-    expr = trigger.group(2)        
+    expr = trigger.group(2)
+
     
     eqSign = expr.index('=')
 
     args = expr[:eqSign].split()
+
+    if "System" in re.split('\W+', expr[:eqSign]):
+        bot.reply("Illegal keyword: 'System'")
+        return
+
     functionName = args[0]
     
     imports = []
