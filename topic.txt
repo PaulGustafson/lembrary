@@ -1,1 +1,1 @@
-Use the .let command to define haskell functions (e.g. .let sq x = x * x).  Try .eval and .print, too.  Email admin@lembrary.com with any feedback.
+Use ".let" to define Haskell one-line functions (e.g. ".let square x = x * x).   Use ".eval" to evaluate expressions.  For  a complete list of commands, type ".info".  We welcome feedback (email admin@lembrary.com).
