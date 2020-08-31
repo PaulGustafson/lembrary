@@ -259,8 +259,8 @@ def let(bot, trigger):
         fmDict[functionName] = modList
         fmDict.commit()
 
-    cmd = 'ghc -rtsopts'    
-    result = subprocess.run([cmd, '-i/home/haskell/lembrary',  path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    cmd = 'ghc'    
+    result = subprocess.run([cmd, '-rtsopts', '-i/home/haskell/lembrary',  path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     lines = result.stdout.decode('UTF-8').splitlines()
 
     ans = '   '.join(lines)
