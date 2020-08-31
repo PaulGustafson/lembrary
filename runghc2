@@ -1,0 +1,3 @@
+#!/bin/bash
+
+GHCRTS="-M10m" runghc "$@"

@@ -190,7 +190,7 @@ def eval(bot, trigger):
         f.write(contents)
 
         
-    cmd = 'GHCRTS="-M10m" runghc'
+    cmd = 'runghc2'
             
     result = subprocess.run([cmd, '-ilembrary',  path], timeout=10, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     lines = result.stdout.decode('UTF-8').splitlines()
