@@ -1,1 +1,1 @@
-Use ".let" to define Haskell one-line functions (e.g. ".let square x = x * x").   Use ".eval" to evaluate expressions (".eval square 2").  For  a complete list of commands, type ".info".  We welcome feedback (email admin@lembrary.com).
+Lembrary is a multiplayer Haskell REPL. Use ".let" to define functions (".let square x = x * x").   Use ".eval" to evaluate expressions (".eval square 2").  For  a complete list of commands, type ".info".
