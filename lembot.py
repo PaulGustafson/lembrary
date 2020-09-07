@@ -5,6 +5,7 @@ import subprocess
 from sqlitedict import SqliteDict
 import os
 import shutil
+import random
 
 
 @module.commands('info')
@@ -12,6 +13,10 @@ def info(bot,trigger):
     """
     Prints information about commands.  Example: ".info eval" prints information about the "eval" command. 
     """
+    if re.search(r'\W', trigger.nick) != None:
+        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
+        return
+
     cmds = ["eval", "let", "show", "show_all", "pin", "pins", "save_pins", "load_pins", "clear_pins", "info"]
     if trigger.group(2):
         c = trigger.group(2).lower().strip()
@@ -27,6 +32,10 @@ def show_all(bot, trigger):
     """
     Shows all definitions of a given function name. An asterisk denotes a pin.
     """
+    if re.search(r'\W', trigger.nick) != None:
+        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
+        return
+
     if trigger.group(2):
         functionName = trigger.group(2).split()[0]
     else:
@@ -57,6 +66,10 @@ def show(bot, trigger):
     """ 
     Show the currently active definition of a function name.  This is the pinned definition if it exists.  Otherwise, it is the last-defined definition.
     """
+    if re.search(r'\W', trigger.nick) != None:
+        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
+        return
+
     functionName = trigger.group(2).split()[0]
     
     pin = -1
@@ -82,6 +95,10 @@ def pin(bot, trigger):
     """
     Pins a name to a specified definition.  Example: suppose '.show_all x' outputs three definitions "0: x = -1", "1: x = 2", and "2: x = 5". Then ".pin x 0" will make all (non-shadowed) occurrences of "x" evaluate to -1.  
     """
+    if re.search(r'\W', trigger.nick) != None:
+        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
+        return
+
     tokens = trigger.group(2).split()
     functionName = tokens[0]
 
@@ -113,6 +130,10 @@ def pins(bot, trigger):
     """
     Prints all of your currently active pins. Type ".info pin" for more information about pins.
     """
+    if re.search(r'\W', trigger.nick) != None:
+        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
+        return
+
     with SqliteDict(filename='/home/haskell/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
         ans = "Pins: "
         for k in pinDict.keys():
@@ -124,6 +145,10 @@ def new_pins(bot, trigger):
     """
     Clears all pins after saving a backup.  Type ".info pin" for more information about pins.
     """
+    if re.search(r'\W', trigger.nick) != None:
+        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
+        return
+
     save_pins(bot, trigger)
     os.remove('/home/haskell/lembrary/pins/' + trigger.nick + '.sqlite')
     bot.reply('Workspace cleared.')
@@ -134,6 +159,11 @@ def save_pins(bot,trigger):
     """
     Saves your current pins.  Type ".info pin" for more information about pins.
     """
+    if re.search(r'\W', trigger.nick) != None:
+        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
+        return
+
+    
     dest = trigger.nick + "_" + str(int(1000*time.time()))
     shutil.copy("/home/haskell/lembrary/pins/" + trigger.nick + ".sqlite",
                 "/home/haskell/lembrary/savedPins/" + dest + ".sqlite")
@@ -145,109 +175,60 @@ def load_pins(bot, trigger):
     """
     Load previously saved pins.  Type ".info pin" for more information about pins.
     """
+    if re.search(r'\W', trigger.nick) != None:
+        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
+        return
+
+    
     dest = trigger.group(2)
     shutil.copy("/home/haskell/lembrary/savedPins/" + dest + ".sqlite",
                 "/home/haskell/lembrary/pins/" + trigger.nick + ".sqlite")
     bot.reply("Loaded workspace: " + dest)
             
         
-    
-@module.commands('eval')
-def eval(bot, trigger):
-    """
-    Evaluate an expression in Haskell.  Can use previously ".let"-defined functions. Example: ".eval 2 + 3".
-    """
-    expr = trigger.group(2)                   
-    imports = []
-    
-    with SqliteDict(filename='/home/haskell/lembrary/fn_mod_dict.sqlite') as fmDict:
-        tokens = set(re.split('\W+', expr))
-        for t in tokens:
-            if t in fmDict:
-                with SqliteDict(filename='/home/haskell/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
-                    if t in pinDict:
-                        imports.append(fmDict[t][pinDict[t]])
-                    else:
-                        imports.append(fmDict[t][-1])
-
-
-    moduleName = "Eval_" + trigger.nick + "_" + str(int(1000*time.time()))
-    
-    if re.search(r'\W', moduleName) != None:
-        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
-        return
-
-    contents = "module " + moduleName + " where \n" 
-    for i in imports:
-        contents += "import " + i + "\n"
-
-    contents += "main = print $ " + expr + "\n"
-    
-        
-    path = '/home/haskell/lembrary/' + moduleName + '.hs'    
-    with open(path, "w+") as f:
-        print("FILE CREATED: " + path)
-        f.write(contents)
-
-        
-    cmd = 'runghc2'
-
-    try:
-        result = subprocess.run([cmd, '-ilembrary',  path], timeout=2, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        lines = result.stdout.decode('UTF-8').splitlines()
-        ans = '   '.join(lines)
-        bot.reply(ans)
-    except:
-        bot.reply('Time limit exceeded.')
-    
-
-@module.commands('let')
-def let(bot, trigger):
-    """
-    Define a function in Haskell notation. Example: ".let cat x y = x ++ y" concatenates strings.
-    """
-    expr = trigger.group(2)
-
-    
+def process(expr):
     eqSign = expr.index('=')
 
     args = expr[:eqSign].split()
 
-    if "System" in re.split('\W+', expr[:eqSign]):
-        bot.reply("Illegal keyword: 'System'")
+    functionName = args[0]
+
+    if re.search(r'\W', functionName) != None:
+        bot.reply('Illegal function name: only alphanumerics and underscores allowed')
         return
 
-    functionName = args[0]
     
     imports = []
+    undefs = []
+
     
     with SqliteDict(filename='/home/haskell/lembrary/fn_mod_dict.sqlite') as fmDict:
         tokens = set(re.split('\W+', expr[eqSign:]))
         for t in tokens:
             if t in fmDict and not t in args:
+                
                 with SqliteDict(filename='/home/haskell/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
                     if t in pinDict:
                         imports.append(fmDict[t][pinDict[t]])
                     else:
                         imports.append(fmDict[t][-1])
+            
+            for u in undefs:
+                contents += u + " = undefined\n"
+
+            
 
         if functionName in fmDict:
             moduleName = "Def_" + functionName + "_" +  str(len(fmDict[functionName])) 
         else:
             moduleName = "Def_" + functionName + "_0" 
 
-    if re.search(r'\W', moduleName) != None:
-        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
-        return
 
     contents = "module " + moduleName + " where \n" 
     for i in imports:
         contents += "import " + i + "\n"
 
-    if trigger.group(1) == 'eval':
-        contents += "main = print $ " + expr + "\n"
-    else:
-        contents += expr + "\n"
+    contents += expr + "\n"
         
     path = '/home/haskell/lembrary/' + moduleName + '.hs'    
     with open(path, "w+") as f:
@@ -261,17 +242,59 @@ def let(bot, trigger):
         modList.append(moduleName)
         fmDict[functionName] = modList
         fmDict.commit()
-
-    cmd = 'ghc'    
-    result = subprocess.run([cmd, '-rtsopts', '-i/home/haskell/lembrary',  path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    
+    result = subprocess.run(['sandbox', 'ghc', '-i/home/haskell/lembrary',  path],
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     lines = result.stdout.decode('UTF-8').splitlines()
+    
 
+@module.commands('eval')
+def eval(bot, trigger):
+    """
+    Evaluate an expression in Haskell.  Can use previously ".let"-defined functions. Example: ".eval 2 + 3".
+    """
+
+    if re.search(r'\W', trigger.nick) != None:
+        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
+        return
+
+
+
+    expr = trigger.group(2)                   
+    name = "e" + str(int(1000*time.time())) + "_" + str(random.randrange(2147483646))
+ 
+    process(expName + " = " + exp)
+
+    result = subprocess.run(['sandbox', 'ghc', '-i/home/haskell/lembrary', '-e', expName],
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    
+    lines = result.stdout.decode('UTF-8').splitlines()
+    ans = '   '.join(lines)
+    bot.reply(ans)
+
+
+@module.commands('let')
+def let(bot, trigger):
+    """
+    Define a function in Haskell notation. Example: ".let cat x y = x ++ y" concatenates strings.
+    """
+
+    if re.search(r'\W', trigger.nick) != None:
+        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
+        return
+    
+    expr = trigger.group(2)
+    lines = process(expr)
     ans = '   '.join(lines)
     bot.reply(ans)
 
     
+@module.commands('update')
 
-    
+
+
+@module.commands('updateR')
+
                 
 
 
