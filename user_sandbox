@@ -1,0 +1,5 @@
+#!/bin/bash
+TMPUSER="tmp_`date +%s`_$RANDOM" \
+       && sudo useradd -M -N -r -s /bin/false $TMPUSER \
+       && sudo -u $TMPUSER $@ \
+       && sudo userdel $TMPUSER
