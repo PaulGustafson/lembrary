@@ -186,7 +186,7 @@ def load_pins(bot, trigger):
     bot.reply("Loaded workspace: " + dest)
             
         
-def process(expr):
+def process(expr, nick):
     eqSign = expr.index('=')
 
     args = expr[:eqSign].split()
@@ -206,8 +206,7 @@ def process(expr):
         tokens = set(re.split('\W+', expr[eqSign:]))
         for t in tokens:
             if t in fmDict and not t in args:
-                
-                with SqliteDict(filename='/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
+                with SqliteDict(filename='/lembrary/pins/' + nick + '.sqlite') as pinDict:
                     if t in pinDict:
                         imports.append(fmDict[t][pinDict[t]])
                     else:
@@ -244,12 +243,11 @@ def process(expr):
         fmDict.commit()
 
     if functionName == "main":
-        cmd = 'runghc'
+        cmd = ['sandbox','runghc', '-i/lembrary',  path]
     else:
-        cmd = 'ghc'
+        cmd = ['ghc', '-i/lembrary',  path]
         
-    result = subprocess.run(['sandbox', cmd, '-i/lembrary',  path],
-                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     lines = result.stdout.decode('UTF-8').splitlines()
     ans =  '   '.join(lines)
 
@@ -268,7 +266,7 @@ def eval(bot, trigger):
         return
 
     expr = trigger.group(2)                   
-    ans = process("main = print $ " + expr)
+    ans = process("main = print $ " + expr, trigger.nick)
     bot.reply(ans)
 
 
@@ -283,7 +281,7 @@ def let(bot, trigger):
         return
     
     expr = trigger.group(2)
-    ans = process(expr)
+    ans = process(expr, trigger.nick)
     bot.reply(ans)
 
 # @module.commands('update')
