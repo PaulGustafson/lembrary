@@ -1,5 +1,5 @@
 #!/bin/bash
-scp def.py haskell@irc.lembrary.com:~/.sopel/modules \
-    && ssh haskell@irc.lembrary.com /home/haskell/.local/bin/sopel
+scp lembot.py haskell@irc.lembrary.com:~/.sopel/modules \
+    && ssh haskell@irc.lembrary.com "python3 /home/haskell/.local/bin/sopel restart"
 
 

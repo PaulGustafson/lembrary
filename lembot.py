@@ -242,10 +242,19 @@ def process(expr):
         modList.append(moduleName)
         fmDict[functionName] = modList
         fmDict.commit()
-    
-    result = subprocess.run(['sandbox', 'ghc', '-i/home/haskell/lembrary',  path],
+
+    if functionName == "main":
+        cmd = runghc
+    else:
+        cmd = ghc
+        
+    result = subprocess.run(['sandbox', cmd, '-i/home/haskell/lembrary',  path],
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     lines = result.stdout.decode('UTF-8').splitlines()
+    ans =  '   '.join(lines)
+
+    # Think about pinning here if successfully compiled
+    return ans
     
 
 @module.commands('eval')
@@ -258,18 +267,8 @@ def eval(bot, trigger):
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
         return
 
-
-
     expr = trigger.group(2)                   
-    name = "e" + str(int(1000*time.time())) + "_" + str(random.randrange(2147483646))
- 
-    process(expName + " = " + exp)
-
-    result = subprocess.run(['sandbox', 'ghc', '-i/home/haskell/lembrary', '-e', expName],
-                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    
-    lines = result.stdout.decode('UTF-8').splitlines()
-    ans = '   '.join(lines)
+    ans = process("main = print $ " + expr)
     bot.reply(ans)
 
 
@@ -284,8 +283,7 @@ def let(bot, trigger):
         return
     
     expr = trigger.group(2)
-    lines = process(expr)
-    ans = '   '.join(lines)
+    ans = process(expr)
     bot.reply(ans)
 
     
