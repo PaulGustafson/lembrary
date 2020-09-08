@@ -1,5 +1,5 @@
 #!/bin/bash
 TMPUSER="tmp_`date +%s`_$RANDOM" \
-       && sudo useradd -M -N -r -s /bin/false $TMPUSER \
+       && sudo useradd -m -s /bin/false $TMPUSER \
        && timeout 2 sudo -u $TMPUSER $@ 
 sudo killall -9 -u $TMPUSER && sudo deluser -f $TMPUSER

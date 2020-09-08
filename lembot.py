@@ -42,17 +42,17 @@ def show_all(bot, trigger):
         bot.reply("Example: '.show_all x' prints all definitions of functions named 'x'")
 
     pin = -1
-    with SqliteDict(filename='/home/haskell/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
+    with SqliteDict(filename='/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
         if functionName in pinDict:
             pin = pinDict[functionName]
             
-    with SqliteDict(filename='/home/haskell/lembrary/fn_mod_dict.sqlite') as fmDict:
+    with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
         if not functionName in fmDict or len(fmDict[functionName]) == 0:
             bot.reply(functionName + " not found.")
             return
 
         for (i, moduleName) in enumerate(fmDict[functionName]):
-            with open('/home/haskell/lembrary/' + moduleName + '.hs', 'r') as f:
+            with open('/lembrary/' + moduleName + '.hs', 'r') as f:
                 lines = f.read().splitlines()
 
                 if i == pin:
@@ -73,17 +73,17 @@ def show(bot, trigger):
     functionName = trigger.group(2).split()[0]
     
     pin = -1
-    with SqliteDict(filename='/home/haskell/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
+    with SqliteDict(filename='/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
         if functionName in pinDict:
             pin = pinDict[functionName]
             
-    with SqliteDict(filename='/home/haskell/lembrary/fn_mod_dict.sqlite') as fmDict:
+    with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
         if not functionName in fmDict or len(fmDict[functionName]) == 0:
             bot.reply(functionName + " not found.")
             return
 
         moduleName = fmDict[functionName][pin]
-        with open('/home/haskell/lembrary/' + moduleName + '.hs', 'r') as f:
+        with open('/lembrary/' + moduleName + '.hs', 'r') as f:
             lines = f.read().splitlines()
             
             bot.reply(lines[-1])
@@ -103,9 +103,9 @@ def pin(bot, trigger):
     functionName = tokens[0]
 
 
-    with SqliteDict(filename='/home/haskell/lembrary/fn_mod_dict.sqlite') as fmDict:
+    with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
 
-        with SqliteDict(filename='/home/haskell/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
+        with SqliteDict(filename='/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
             if not functionName in fmDict:
                 bot.reply(trigger.group(2) + " not found.")
                 return
@@ -134,7 +134,7 @@ def pins(bot, trigger):
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
         return
 
-    with SqliteDict(filename='/home/haskell/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
+    with SqliteDict(filename='/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
         ans = "Pins: "
         for k in pinDict.keys():
             ans += "(" + k + " " + str(pinDict[k]) + ") "
@@ -150,7 +150,7 @@ def new_pins(bot, trigger):
         return
 
     save_pins(bot, trigger)
-    os.remove('/home/haskell/lembrary/pins/' + trigger.nick + '.sqlite')
+    os.remove('/lembrary/pins/' + trigger.nick + '.sqlite')
     bot.reply('Workspace cleared.')
    
 
@@ -165,8 +165,8 @@ def save_pins(bot,trigger):
 
     
     dest = trigger.nick + "_" + str(int(1000*time.time()))
-    shutil.copy("/home/haskell/lembrary/pins/" + trigger.nick + ".sqlite",
-                "/home/haskell/lembrary/savedPins/" + dest + ".sqlite")
+    shutil.copy("/lembrary/pins/" + trigger.nick + ".sqlite",
+                "/lembrary/savedPins/" + dest + ".sqlite")
     bot.reply("Saved workspace: " + dest)
         
     
@@ -181,8 +181,8 @@ def load_pins(bot, trigger):
 
     
     dest = trigger.group(2)
-    shutil.copy("/home/haskell/lembrary/savedPins/" + dest + ".sqlite",
-                "/home/haskell/lembrary/pins/" + trigger.nick + ".sqlite")
+    shutil.copy("/lembrary/savedPins/" + dest + ".sqlite",
+                "/lembrary/pins/" + trigger.nick + ".sqlite")
     bot.reply("Loaded workspace: " + dest)
             
         
@@ -202,12 +202,12 @@ def process(expr):
     undefs = []
 
     
-    with SqliteDict(filename='/home/haskell/lembrary/fn_mod_dict.sqlite') as fmDict:
+    with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
         tokens = set(re.split('\W+', expr[eqSign:]))
         for t in tokens:
             if t in fmDict and not t in args:
                 
-                with SqliteDict(filename='/home/haskell/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
+                with SqliteDict(filename='/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
                     if t in pinDict:
                         imports.append(fmDict[t][pinDict[t]])
                     else:
@@ -230,12 +230,12 @@ def process(expr):
 
     contents += expr + "\n"
         
-    path = '/home/haskell/lembrary/' + moduleName + '.hs'    
+    path = '/lembrary/' + moduleName + '.hs'    
     with open(path, "w+") as f:
         print("FILE CREATED: " + path)
         f.write(contents)
 
-    with SqliteDict(filename='/home/haskell/lembrary/fn_mod_dict.sqlite') as fmDict:
+    with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
         if not functionName in fmDict:
             fmDict[functionName] = []
         modList = fmDict[functionName]
@@ -244,11 +244,11 @@ def process(expr):
         fmDict.commit()
 
     if functionName == "main":
-        cmd = runghc
+        cmd = 'runghc'
     else:
-        cmd = ghc
+        cmd = 'ghc'
         
-    result = subprocess.run(['sandbox', cmd, '-i/home/haskell/lembrary',  path],
+    result = subprocess.run(['sandbox', cmd, '-i/lembrary',  path],
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     lines = result.stdout.decode('UTF-8').splitlines()
     ans =  '   '.join(lines)
@@ -286,15 +286,6 @@ def let(bot, trigger):
     ans = process(expr)
     bot.reply(ans)
 
-    
-@module.commands('update')
+# @module.commands('update')
+# @module.commands('updateR')
 
-
-
-@module.commands('updateR')
-
-                
-
-
-    
-    
