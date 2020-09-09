@@ -6,6 +6,6 @@ scp lembot.py haskell@irc.lembrary.com:~/.sopel/modules
 # scp default.cfg haskell@irc.lembrary.com:~/.sopel 
 
 # Might have to update PYTHONPATH to get this to work
-ssh haskell@irc.lembrary.com "/usr/bin/python3 /home/haskell/.local/bin/sopel restart"  
+ssh haskell@irc.lembrary.com "/home/haskell/.local/bin/sopel restart"  
 
 
