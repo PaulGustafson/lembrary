@@ -27,8 +27,8 @@ def info(bot,trigger):
         bot.say('Type ".info <command>" for more information about a specific command.')
 
         
-@module.commands('showAll')
-def showAll(bot, trigger):
+@module.commands('showall')
+def showall(bot, trigger):
     """
     Shows all definitions of a given function name. An asterisk denotes a pin.
     """
@@ -39,7 +39,7 @@ def showAll(bot, trigger):
     if trigger.group(2):
         function = trigger.group(2).split()[0]
     else:
-        bot.reply("Example: '.showAll x' prints all definitions of functions named 'x'")
+        bot.reply("Example: '.showall x' prints all definitions of functions named 'x'")
 
     pin = -1
     with SqliteDict(filename='/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
@@ -93,7 +93,7 @@ def show(bot, trigger):
 @module.commands('pin')
 def pin(bot, trigger):
     """
-    Pins a name to a specified definition.  Example: suppose '.showAll x' outputs three definitions "0: x = -1", "1: x = 2", and "2: x = 5". Then ".pin x 0" will make all (non-shadowed) occurrences of "x" evaluate to -1.  
+    Pins a name to a specified definition.  Example: suppose '.showall x' outputs three definitions "0: x = -1", "1: x = 2", and "2: x = 5". Then ".pin x 0" will make all (non-shadowed) occurrences of "x" evaluate to -1.  
     """
     if re.search(r'\W', trigger.nick) != None:
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
@@ -148,8 +148,8 @@ def pins(bot, trigger):
         bot.reply(ans)
 
         
-@module.commands('clearPins')
-def clearPins(bot, trigger):
+@module.commands('clearpins')
+def clearpins(bot, trigger):
     """
     Clears all pins after saving a backup.  Type ".info pin" for more information about pins.
     """
@@ -157,13 +157,13 @@ def clearPins(bot, trigger):
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
         return
 
-    savePins(bot, trigger)
+    savepins(bot, trigger)
     os.remove('/lembrary/pins/' + trigger.nick + '.sqlite')
     bot.reply('Workspace cleared.')
    
 
-@module.commands('savePins')
-def savePins(bot,trigger):
+@module.commands('savepins')
+def savepins(bot,trigger):
     """
     Saves your current pins.  Type ".info pin" for more information about pins.
     """
@@ -178,8 +178,8 @@ def savePins(bot,trigger):
     bot.reply("Saved workspace: " + dest)
         
     
-@module.commands('loadPins')
-def loadPins(bot, trigger):
+@module.commands('loadpins')
+def loadpins(bot, trigger):
     """
     Load previously saved pins.  Type ".info pin" for more information about pins.
     """
