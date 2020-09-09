@@ -107,7 +107,7 @@ def pin(bot, trigger):
         bot.reply("Pin index required.")
         return
         
-    if pinH(function, index, trigger.nick()):
+    if pinH(function, index, trigger.nick):
             bot.reply(function + " " + str(index) + " pinned.")
     else:
         bot.reply("Pin failed.")
@@ -126,6 +126,8 @@ def pinH(function, index, nick):
             pinDict[function] = index
             pinDict.commit()
             return True
+        
+    return False
     
 
 
