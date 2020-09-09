@@ -107,21 +107,17 @@ def pin(bot, trigger):
         bot.reply("Pin index required.")
         return
         
-    if pinH(function, index):
+    if pinH(function, index, trigger.nick()):
             bot.reply(function + " " + str(index) + " pinned.")
+    else:
+        bot.reply("Pin failed.")
         
 
 
-def pinH(function, index):
+def pinH(function, index, nick):
     with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
-        with SqliteDict(filename='/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
-            if not function in fmDict:
-                bot.reply(trigger.group(2) + " not found.")
-                return False
-                
-
-            if len(fmDict[function]) <= index:
-                bot.reply(trigger.group(2) + " not found.")
+        with SqliteDict(filename='/lembrary/pins/' + nick + '.sqlite') as pinDict:
+            if not function in fmDict or  len(fmDict[function]) <= index:
                 return False
 
             while index < 0:
@@ -196,7 +192,7 @@ def loadPins(bot, trigger):
     bot.reply("Loaded workspace: " + dest)
 
 
-def process(expr, nick, localPins):
+def process(expr, nick, localPins=dict()):
     eqSign = expr.index('=')
 
     args = expr[:eqSign].split()
@@ -252,7 +248,7 @@ def process(expr, nick, localPins):
         modList = fmDict[function]
         modList.append(module)
         fmDict[function] = modList
-        pinH(function, -1)
+        pinH(function, -1, nick)
         fmDict.commit()
 
     if function == "main":
