@@ -204,12 +204,9 @@ def process(expr, nick, localPins=dict()):
     if re.search(r'\W', function) != None:
         bot.reply('Illegal function name: only alphanumerics and underscores allowed.')
         return
-
     
     imports = []
     undefs = []
-
-    
     with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
         tokens = set(re.split('\W+', expr[eqSign:]))
         for t in tokens:
@@ -244,24 +241,27 @@ def process(expr, nick, localPins=dict()):
         print("FILE CREATED: " + path)
         f.write(contents)
 
+
     with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
         if not function in fmDict:
             fmDict[function] = []
         modList = fmDict[function]
         modList.append(module)
         fmDict[function] = modList
-        pinH(function, -1, nick)
+        index = len(modList) - 1
         fmDict.commit()
 
-    if function == "main":
-        cmd = ['sandbox','runghc', '-i/lembrary',  path]
-    else:
-        cmd = ['ghc', '-i/lembrary',  path]
+        if function == "main":
+            cmd = ['sandbox','runghc', '-i/lembrary',  path]
+        else:
+            cmd = ['ghc', '-i/lembrary',  path]
         
-    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    lines = result.stdout.decode('UTF-8').splitlines()
-    ans =  '   '.join(lines)    
-    return ans
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        lines = result.stdout.decode('UTF-8').splitlines()
+        ans =  '   '.join(lines)
+        return function, index, ans
+
+    return function, None, "Unable to open function-module dictionary."
 
 # def processR(expr, nick, seen):
 #     eqSign = expr.index('=')
@@ -349,7 +349,7 @@ def eval(bot, trigger):
         return
 
     expr = trigger.group(2)                   
-    ans = process("main = print $ " + expr, trigger.nick)
+    _, _, ans = process("main = print $ " + expr, trigger.nick)
     bot.reply(ans)
 
 
@@ -365,7 +365,7 @@ def let(bot, trigger):
     
     expr = trigger.group(2)
     
-    ans = process(expr, trigger.nick)
+    _, _, ans = process(expr, trigger.nick)
     bot.reply(ans)
 
     
@@ -408,8 +408,11 @@ def update(bot, trigger):
                             bot.reply("Malformed input file.")
                             return
 
-                    fn = "\n".join(lines[i:])
-                    process(fn, trigger.nick, localPins)
+                    expr = "\n".join(lines[i:])
+                    fn, index, _ = process(expr, trigger.nick, localPins)
+                    pinH(fn, index, trigger.nick)
+                    bot.reply(fn + " updated (pinned at " + str(index) + ").")
+                    
                 
         
 
