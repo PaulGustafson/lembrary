@@ -1,5 +1,11 @@
 #!/bin/bash
-scp lembot.py haskell@irc.lembrary.com:~/.sopel/modules \
-    && ssh haskell@irc.lembrary.com "python3 /home/haskell/.local/bin/sopel restart"
+
+
+scp lembot.py haskell@irc.lembrary.com:~/.sopel/modules 
+# scp sandbox haskell@irc.lembrary.com:~/.local/bin  
+# scp default.cfg haskell@irc.lembrary.com:~/.sopel 
+
+# Might have to update PYTHONPATH to get this to work
+ssh haskell@irc.lembrary.com "/usr/bin/python3 /home/haskell/.local/bin/sopel restart"  
 
 

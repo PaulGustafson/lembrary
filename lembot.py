@@ -185,7 +185,6 @@ def load_pins(bot, trigger):
                 "/lembrary/pins/" + trigger.nick + ".sqlite")
     bot.reply("Loaded workspace: " + dest)
             
-        
 def process(expr, nick):
     eqSign = expr.index('=')
 
@@ -251,7 +250,6 @@ def process(expr, nick):
     lines = result.stdout.decode('UTF-8').splitlines()
     ans =  '   '.join(lines)
 
-    # Think about pinning here if successfully compiled
     return ans
     
 
@@ -281,9 +279,46 @@ def let(bot, trigger):
         return
     
     expr = trigger.group(2)
+    
     ans = process(expr, trigger.nick)
     bot.reply(ans)
 
-# @module.commands('update')
+    
+@module.commands('update')
+def update(bot, trigger):
+    if re.search(r'\W', trigger.nick) != None:
+        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
+        return
+    
+    functionNames = trigger.group(2).split()
+
+    with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
+        with SqliteDict(filename='/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
+            for f in functionNames:
+                if f in fmDict:
+                    if f in pinDict:
+                        module = fmDict[f][pinDict[t]]
+                    else:
+                        module = fmDict[f][-1]
+                else:
+                    bot.reply("Undefined function: " + f + ". ")
+
+                path = '/lembrary/' + module + '.hs'
+                with open(path, "r") as f:
+                    contents = f.read()
+
+                    lines = contents.splitlines()
+                    start = 0
+                    while not '=' in lines[start]:
+                        start += 1
+                        if start >= len(lines):
+                            bot.reply("Malformed input file.")
+                            return
+
+                    fn = "\n".join(lines[start:])
+                    process(fn, trigger.nick)
+                
+        
+
 # @module.commands('updateR')
 
