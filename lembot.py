@@ -106,11 +106,12 @@ def pin(bot, trigger):
     else:
         bot.reply("Pin index required.")
         return
-        
+
+
     if pinH(function, index, trigger.nick):
-            bot.reply(function + " " + str(index) + " pinned.")
+        bot.reply(function + " " + str(index) + " pinned.")
     else:
-        bot.reply("Pin failed.")
+        bot.reply("Pin failed: " + function + " " + str(index))
         
 
 
@@ -119,10 +120,10 @@ def pinH(function, index, nick):
         with SqliteDict(filename='/lembrary/pins/' + nick + '.sqlite') as pinDict:
             if not function in fmDict or  len(fmDict[function]) <= index:
                 return False
-
+            
             while index < 0:
                 index += len(fmDict[function])
-            
+
             pinDict[function] = index
             pinDict.commit()
             return True
@@ -196,10 +197,9 @@ def loadpins(bot, trigger):
 
 def process(expr, nick):
     function, args, tokens = exprData(expr)
-    
     imports = getImports(tokens, nick)
-    
-    makeFile(function, expr, imports)
+    ans, index = makeFile(function, expr, imports)
+    return ans, function, index
 
 
 
@@ -217,17 +217,18 @@ def processM(module, nick, depth=0):
                     elif t in imports and depth > 0:
                         processM(imports[t], nick, depth - 1)
                         
-    makeFile(function, expr, imports.values())
+    ans, index = makeFile(function, expr, imports.values())
+    return ans, function, index
 
     
 def makeFile(function, expr, imports):
     with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
         if function in fmDict:
-            module = "Def_" + function + "_" +  str(len(fmDict[function])) 
+            index = len(fmDict[function])
         else:
-            module = "Def_" + function + "_0" 
+            index = 0
 
-
+    module = "Def_" + function + "_" +  str(index)
     contents = "module " + module + " where \n" 
     for i in imports:
         contents += "import " + i + "\n"
@@ -256,7 +257,7 @@ def makeFile(function, expr, imports):
     lines = result.stdout.decode('UTF-8').splitlines()
     ans =  '   '.join(lines)
 
-    return ans
+    return ans, index
 
 
 
@@ -271,7 +272,7 @@ def eval(bot, trigger):
         return
 
     expr = trigger.group(2)                   
-    _, _, ans = process("main = print $ " + expr, trigger.nick)
+    ans, _, _ = process("main = print $ " + expr, trigger.nick)
     bot.reply(ans)
 
 
@@ -286,9 +287,11 @@ def let(bot, trigger):
         return
     
     expr = trigger.group(2)
-    
-    _, _, ans = process(expr, trigger.nick)
-    bot.reply(ans)
+    ans, function, index  = process(expr, trigger.nick)
+    if pinH(function, index, trigger.nick):
+        bot.reply(ans)
+    else:
+        bot.reply("Definition failed.")
 
 
 def moduleData(module):
@@ -341,6 +344,20 @@ def getImports(tokens, nick):
             return imports
     
 
+def getModule(function, nick):
+      with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
+        with SqliteDict(filename='/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
+            for f in functions:
+                if f in fmDict:
+                    if f in pinDict:
+                        module = fmDict[f][pinDict[f]]
+                    else:
+                        module = fmDict[f][-1]  ## TODO: find a better way to pick defaults
+                else:
+                    bot.reply("Undefined function: " + f + ". ")
+
+             
+        
 
 @module.commands('update')
 def update(bot, trigger):
@@ -348,79 +365,17 @@ def update(bot, trigger):
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
         return
     
-    functions = trigger.group(2).split()
+    args = trigger.group(2).split()
+    function = args[0]
+    if len(args == 2):
+        recursionDepth = args[1]
 
-    with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
-        with SqliteDict(filename='/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
-            for f in functions:
-                if f in fmDict:
-                    if f in pinDict:
-                        module = fmDict[f][pinDict[f]]
-                    else:
-                        module = fmDict[f][-1]
-                else:
-                    bot.reply("Undefined function: " + f + ". ")
-
-                path = '/lembrary/' + module + '.hs'
-                with open(path, "r") as f:
-                    contents = f.read()
-
-                    lines = contents.splitlines()
-                    i = 0
-                    localPins = dict()
-                    while not '=' in lines[i]:
-                        if 'import' in lines[i]:
-                            # only want to change imports for pinned variables..
-                            module = lines[i].split(" ")[1]
-                            function = module.split("_")[1]
-                            if function not in pinDict:
-                                localPins[function] = module
-                            
-                        i += 1
-                        if i >= len(lines):
-                            bot.reply("Malformed input file.")
-                            return
-
-                    expr = "\n".join(lines[i:])
-                    fn, index, _ = process(expr, trigger.nick, localPins)
-                    pinH(fn, index, trigger.nick)
-                    bot.reply(fn + " updated (pinned at " + str(index) + ").")
-                    
-                
-        
-
-@module.commands('updateR')
-def updateR(bot, trigger):
-    if re.search(r'\W', trigger.nick) != None:
-        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
-        return
     
-    functions = trigger.group(2).split()
-    seen = set()
-    
-    with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
-        with SqliteDict(filename='/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
-            for f in functions:
-                if f in fmDict:
-                    if f in pinDict:
-                        module = fmDict[f][pinDict[f]]
-                    else:
-                        module = fmDict[f][-1]
-                else:
-                    bot.reply("Undefined function: " + f + ". ")
+    ans, function, index = processM(module, trigger.nick, recursionDepth)
+    if pinH(function, index, trigger.nick):
+        bot.reply(ans)
+    else:
+        bot.reply("Update failed.")
 
-                path = '/lembrary/' + module + '.hs'
-                with open(path, "r") as f:
-                    contents = f.read()
 
-                    lines = contents.splitlines()
-                    start = 0
-                    while not '=' in lines[start]:
-                        start += 1
-                        if start >= len(lines):
-                            bot.reply("Malformed input file.")
-                            return
-
-                    fn = "\n".join(lines[start:])
-                    processR(fn, trigger.nick)
 
