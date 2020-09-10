@@ -204,7 +204,7 @@ def process(expr, nick):
 
 
 # Update pins in a module
-def processM(module, nick, depth=0, fmDict, pinDict):
+def processM(module, nick, depth, fmDict, pinDict):
     expr, imports = moduleData(module)
     function, args, tokens = exprData(expr)
 
@@ -212,9 +212,10 @@ def processM(module, nick, depth=0, fmDict, pinDict):
     for t in tokens:
         if t in fmDict:
             if t in pinDict:
-                imports[t] = fmDict[pinDict[t]]
-            elif t in imports and depth > 0:
-                processM(imports[t], nick, depth - 1, fmDict, pinDict)
+                imports[t] = fmDict[t][pinDict[t]]
+            elif (t in imports) and (depth > 0):
+                _, _, index = processM(imports[t], nick, depth - 1, fmDict, pinDict)
+                imports[t] = fmDict[t][index]
 
     print("Making file...")
     ans, index = makeFile(function, expr, imports.values())
@@ -302,13 +303,13 @@ def update(bot, trigger):
     args = trigger.group(2).split()
     function = args[0]
     module = getModule(function, trigger.nick)
-    recursionDepth = 0
+    recursionDepth = 100
     if len(args) == 2:
-        recursionDepth = args[1]
+        recursionDepth = int(args[1])
 
     print("Processing update...")
     with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
-        with SqliteDict(filename='/lembrary/pins/' + nick + '.sqlite') as pinDict:
+        with SqliteDict(filename='/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
             ans, function, index = processM(module, trigger.nick, recursionDepth, fmDict, pinDict)
 
     if pinH(function, index, trigger.nick):
@@ -320,8 +321,10 @@ def update(bot, trigger):
 
 def moduleData(module):
     path = '/lembrary/' + module + '.hs'
+    print("Opening " + path)
     with open(path, "r") as f:
         contents = f.read()
+        print("Contents: \n" + contents)
 
         lines = contents.splitlines()
         i = 0
@@ -331,18 +334,23 @@ def moduleData(module):
                 module = lines[i].split(" ")[1]
                 function = module.split("_")[1]
                 imports[function] = module
-                    
-                i += 1
-                if i >= len(lines):
-                    return 
+                print("Import added: " + function + ":" + module)
+                
+            i += 1
+            if i >= len(lines):
+                print("Malformed file.")
+                return 
                     
         expr = "\n".join(lines[i:])
 
+        print("Imports: " + str(imports))
+        print("Expr: " + str(expr))
         return expr, imports
 
 
 
 def exprData(expr):
+    print("Parsing expression...")
     eqSign = expr.index('=')
     args = expr[:eqSign].split()
     function = args[0]
