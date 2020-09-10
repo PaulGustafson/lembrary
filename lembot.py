@@ -17,7 +17,7 @@ def info(bot,trigger):
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
         return
 
-    cmds = ["eval", "let", "show", "show_all", "pin", "pins", "save_pins", "load_pins", "clear_pins", "info"]
+    cmds = ["eval", "let", "show", "show_all", "pin", "pins", "save_pins", "load_pins", "clear_pins", "info", "update"]
     if trigger.group(2):
         c = trigger.group(2).lower().strip()
         if c in cmds:
@@ -204,19 +204,19 @@ def process(expr, nick):
 
 
 # Update pins in a module
-def processM(module, nick, depth=0):
+def processM(module, nick, depth=0, fmDict, pinDict):
     expr, imports = moduleData(module)
     function, args, tokens = exprData(expr)
-        
-    with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
-        with SqliteDict(filename='/lembrary/pins/' + nick + '.sqlite') as pinDict:
-            for t in tokens:
-                if t in fmDict:
-                    if t in pinDict:
-                        imports[t] = fmDict[pinDict[t]]
-                    elif t in imports and depth > 0:
-                        processM(imports[t], nick, depth - 1)
-                        
+
+    print("Processing imports...")
+    for t in tokens:
+        if t in fmDict:
+            if t in pinDict:
+                imports[t] = fmDict[pinDict[t]]
+            elif t in imports and depth > 0:
+                processM(imports[t], nick, depth - 1, fmDict, pinDict)
+
+    print("Making file...")
     ans, index = makeFile(function, expr, imports.values())
     return ans, function, index
 
@@ -293,6 +293,30 @@ def let(bot, trigger):
     else:
         bot.reply("Definition failed.")
 
+@module.commands('update')
+def update(bot, trigger):
+    if re.search(r'\W', trigger.nick) != None:
+        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
+        return
+    
+    args = trigger.group(2).split()
+    function = args[0]
+    module = getModule(function, trigger.nick)
+    recursionDepth = 0
+    if len(args) == 2:
+        recursionDepth = args[1]
+
+    print("Processing update...")
+    with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
+        with SqliteDict(filename='/lembrary/pins/' + nick + '.sqlite') as pinDict:
+            ans, function, index = processM(module, trigger.nick, recursionDepth, fmDict, pinDict)
+
+    if pinH(function, index, trigger.nick):
+        bot.reply(ans)
+    else:
+        bot.reply("Update failed.")
+
+
 
 def moduleData(module):
     path = '/lembrary/' + module + '.hs'
@@ -344,39 +368,20 @@ def getImports(tokens, nick):
             return imports
     
 
-def getModule(function, nick):
-      with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
-        with SqliteDict(filename='/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
-            for f in functions:
-                if f in fmDict:
-                    if f in pinDict:
-                        module = fmDict[f][pinDict[f]]
-                    else:
-                        # TODO: find a better way to pick defaults
-                        module = fmDict[f][-1]  
+def getModule(f, nick):
+    with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
+        with SqliteDict(filename='/lembrary/pins/' + nick + '.sqlite') as pinDict:
+            if f in fmDict:
+                if f in pinDict:
+                    module = fmDict[f][pinDict[f]]
                 else:
-                    bot.reply("Undefined function: " + f + ". ")
-
-             
+                    # TODO: find a better way to pick defaults
+                    module = fmDict[f][-1]
+                return module
+            
+    raise Exception('Module not found for ' + f)
         
 
-@module.commands('update')
-def update(bot, trigger):
-    if re.search(r'\W', trigger.nick) != None:
-        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
-        return
-    
-    args = trigger.group(2).split()
-    function = args[0]
-    if len(args == 2):
-        recursionDepth = args[1]
-
-    
-    ans, function, index = processM(module, trigger.nick, recursionDepth)
-    if pinH(function, index, trigger.nick):
-        bot.reply(ans)
-    else:
-        bot.reply("Update failed.")
 
 
 
