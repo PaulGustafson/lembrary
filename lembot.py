@@ -118,7 +118,7 @@ def pin(bot, trigger):
 def pinH(function, index, nick):
     with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
         with SqliteDict(filename='/lembrary/pins/' + nick + '.sqlite') as pinDict:
-            if not function in fmDict or  len(fmDict[function]) <= index:
+            if not function in fmDict or len(fmDict[function]) <= index:
                 return False
             
             while index < 0:
@@ -164,7 +164,7 @@ def clearpins(bot, trigger):
    
 
 @module.commands('savepins')
-def savepins(bot,trigger):
+def savepins(bot, trigger):
     """
     Saves your current pins.  Type ".info pin" for more information about pins.
     """
@@ -320,14 +320,14 @@ def moduleData(module):
 
 def exprData(expr):
     eqSign = expr.index('=')
-    args = set(expr[:eqSign].split())
+    args = expr[:eqSign].split()
     function = args[0]
     if re.search(r'\W', function) != None:
         bot.reply(
             'Illegal function name: only alphanumerics and underscores allowed')
         return
     allTokens = set(re.split('\W+', expr[eqSign:]))
-    tokens = tokens.difference(args)
+    tokens = allTokens.difference(set(args))
     
     return function, args, tokens
 
@@ -352,7 +352,8 @@ def getModule(function, nick):
                     if f in pinDict:
                         module = fmDict[f][pinDict[f]]
                     else:
-                        module = fmDict[f][-1]  ## TODO: find a better way to pick defaults
+                        # TODO: find a better way to pick defaults
+                        module = fmDict[f][-1]  
                 else:
                     bot.reply("Undefined function: " + f + ". ")
 
