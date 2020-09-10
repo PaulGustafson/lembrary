@@ -112,6 +112,30 @@ def pin(bot, trigger):
         bot.reply(function + " " + str(index) + " pinned.")
     else:
         bot.reply("Pin failed: " + function + " " + str(index))
+
+@module.commands('unpin')
+def unpin(bot, trigger):
+    """
+    Unpins a definition from a name. See also: pin.
+    """
+    if re.search(r'\W', trigger.nick) != None:
+        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
+        return
+
+    savepins(bot, trigger)
+    functions = trigger.group(2).split()
+    with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
+        with SqliteDict(filename='/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
+
+            for function in functions:
+                if not function in fmDict:
+                    bot.reply("Name not found: " + function)
+                else:
+                    pinDict.pop(function)
+                    pinDict.commit()
+                    bot.reply(function + " unpinned.")
+    
+
         
 
 
