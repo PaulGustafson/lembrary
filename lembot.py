@@ -218,6 +218,23 @@ def loadpins(bot, trigger):
                 "/lembrary/pins/" + trigger.nick + ".sqlite")
     bot.reply("Loaded workspace: " + dest)
 
+@module.commands('type')
+def type(bot, trigger):
+    
+    if re.search(r'\W', trigger.nick) != None:
+        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
+        return
+
+    expr = trigger.group(2)
+    module = getModule(expr, trigger.nick)
+    path = '/lembrary/' + module + '.hs'    
+    cmd = ['ghc', '-i/lembrary',  path, "-e", ":t " + expr]
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    lines = result.stdout.decode('UTF-8').splitlines()
+    ans =  '   '.join(lines)
+
+    bot.reply(ans)
+    
 
 def process(expr, nick):
     function, args, tokens = exprData(expr)
