@@ -17,7 +17,8 @@ def info(bot,trigger):
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
         return
 
-    cmds = ["eval", "let", "show", "show_all", "pin", "pins", "save_pins", "load_pins", "clear_pins", "info", "update"]
+    cmds = ["eval", "let", "show", "show_all", "pin", "pins", "save_pins",
+            "load_pins", "clear_pins", "info", "update", "type"]
     if trigger.group(2):
         c = trigger.group(2).lower().strip()
         if c in cmds:
