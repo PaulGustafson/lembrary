@@ -7,6 +7,93 @@ import os
 import shutil
 import random
 
+@module.commands('import')
+def importC(bot, trigger):
+    if re.search(r'\W', trigger.nick) != None:
+        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
+        return
+
+
+    with open("/lembrary/imports/" + trigger.nick  + ".txt", "a+") as f:
+        f.write("import " + trigger.group(2))             
+
+@module.commands('imports')
+def imports(bot, trigger):
+    if re.search(r'\W', trigger.nick) != None:
+        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
+        return
+
+
+    with open("/lembrary/imports/" + trigger.nick  + ".txt", "r") as f:
+        lines = f.read().splitlines()
+        for l in lines:
+            bot.reply(l)
+
+            
+@module.commands('imports')
+def unimport(bot, trigger)
+    if re.search(r'\W', trigger.nick) != None:
+        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
+        return
+
+    term = trigger.group(2).strip()
+
+    contents = []
+    
+    with open("/lembrary/imports/" + trigger.nick  + ".txt", "r") as f:
+        lines = f.read().splitlines()
+
+        for l in lines():
+            if not term in l:
+                contents += l + "\n"
+            
+    with open("/lembrary/imports/" + trigger.nick  + ".txt", "w") as f:
+        f.write(contents)            
+
+
+@module.commands('saveimports')
+def saveimports(bot, trigger):
+    if re.search(r'\W', trigger.nick) != None:
+        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
+        return
+    
+
+    dest = trigger.nick + "_" + str(int(1000*time.time()))
+    shutil.copy("/lembrary/imports/" + trigger.nick + ".txt",
+                "/lembrary/savedImports/" + dest + ".txt")
+    bot.reply("Saved imports: " + dest)
+
+    
+@module.commands('loadimports')
+def loadimports(bot, trigger):
+    if re.search(r'\W', trigger.nick) != None:
+        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
+        return
+
+    
+    dest = trigger.group(2)
+
+    if re.search(r'\W', dest) != None:
+        bot.reply('Imports not found.')
+    return
+
+    shutil.copy("/lembrary/savedImports/" + dest + ".txt",
+                "/lembrary/imports/" + trigger.nick + ".txt")
+    bot.reply("Loaded imports: " + dest)
+    
+    
+@module.commands('clearimports')
+def clearimports(bot, trigger):
+    if re.search(r'\W', trigger.nick) != None:
+        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
+        return
+
+
+    saveimports(bot, trigger)
+    os.remove('/lembrary/imports/' + trigger.nick + '.txt')
+    bot.reply('Imports cleared.')
+
+    
 
 @module.commands('info')
 def info(bot,trigger):
@@ -17,8 +104,8 @@ def info(bot,trigger):
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
         return
 
-    cmds = ["eval", "let", "show", "show_all", "pin", "pins", "save_pins",
-            "load_pins", "clear_pins", "info", "update", "type"]
+    cmds = ["eval", "let", "show", "showall", "pin", "pins", "savepins",
+            "loadpins", "clearpins", "info", "update", "type"]
     if trigger.group(2):
         c = trigger.group(2).lower().strip()
         if c in cmds:
@@ -135,9 +222,7 @@ def unpin(bot, trigger):
                     pinDict.pop(function)
                     pinDict.commit()
                     bot.reply(function + " unpinned.")
-    
-
-        
+            
 
 
 def pinH(function, index, nick):
@@ -185,7 +270,7 @@ def clearpins(bot, trigger):
 
     savepins(bot, trigger)
     os.remove('/lembrary/pins/' + trigger.nick + '.sqlite')
-    bot.reply('Workspace cleared.')
+    bot.reply('Pins cleared.')
    
 
 @module.commands('savepins')
@@ -201,7 +286,7 @@ def savepins(bot, trigger):
     dest = trigger.nick + "_" + str(int(1000*time.time()))
     shutil.copy("/lembrary/pins/" + trigger.nick + ".sqlite",
                 "/lembrary/savedPins/" + dest + ".sqlite")
-    bot.reply("Saved workspace: " + dest)
+    bot.reply("Saved pins: " + dest)
         
     
 @module.commands('loadpins')
@@ -215,9 +300,14 @@ def loadpins(bot, trigger):
 
     
     dest = trigger.group(2)
+    
+    if re.search(r'\W', dest) != None:
+        bot.reply('Pins not found.')
+    return
+
     shutil.copy("/lembrary/savedPins/" + dest + ".sqlite",
                 "/lembrary/pins/" + trigger.nick + ".sqlite")
-    bot.reply("Loaded workspace: " + dest)
+    bot.reply("Loaded pins: " + dest)
 
 @module.commands('type')
 def type(bot, trigger):
