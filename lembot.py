@@ -363,8 +363,7 @@ def makeFile(function, expr, imports):
 
     module = "Def_" + function + "_" +  str(index)
     contents = "module " + module + " where \n" 
-    for i in imports:
-        contents += "import " + i + "\n"
+    contents += imports + "\n"
 
     contents += expr + "\n"
         
@@ -496,16 +495,21 @@ def exprData(expr):
     return function, args, tokens
 
 def getImports(tokens, nick):
-     with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
+    imports = ""
+    with open("/lembrary/imports/" + trigger.nick  + ".txt", "r") as f:
+        imports = f.read()
+        
+    with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
         with SqliteDict(filename='/lembrary/pins/' + nick + '.sqlite') as pinDict:
-            imports = []
             for t in tokens:
                 if t in fmDict:
                     if t in pinDict:
-                        imports.append(fmDict[t][pinDict[t]])
+                        imports += "import " + fmDict[t][pinDict[t]] + "\n"
                     else:
-                        imports.append(fmDict[t][-1])
-            return imports
+                        imports += "import " + fmDict[t][-1] + "\n"
+
+    return imports
+            
     
 
 def getModule(f, nick):
