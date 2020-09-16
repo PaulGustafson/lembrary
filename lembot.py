@@ -15,7 +15,8 @@ def importC(bot, trigger):
 
 
     with open("/lembrary/imports/" + trigger.nick  + ".txt", "a+") as f:
-        f.write("import " + trigger.group(2))             
+        f.write("import " + trigger.group(2) + "\n")
+        bot.reply("Imported.")
 
 @module.commands('imports')
 def imports(bot, trigger):
@@ -23,31 +24,38 @@ def imports(bot, trigger):
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
         return
 
+    with open("/lembrary/imports/" + trigger.nick  + ".txt", "a+"):
+        pass
 
-    with open("/lembrary/imports/" + trigger.nick  + ".txt", "r") as f:
+    bot.reply("Imports: ")
+    
+    with open("/lembrary/imports/" + trigger.nick  + ".txt", "r+") as f:
         lines = f.read().splitlines()
         for l in lines:
             bot.reply(l)
 
             
-@module.commands('imports')
-def unimport(bot, trigger)
+@module.commands('unimport')
+def unimport(bot, trigger):
     if re.search(r'\W', trigger.nick) != None:
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
         return
 
     term = trigger.group(2).strip()
 
-    contents = []
+    contents = ""
+
+    with open("/lembrary/imports/" + trigger.nick  + ".txt", "a+"):
+        pass
     
-    with open("/lembrary/imports/" + trigger.nick  + ".txt", "r") as f:
+    with open("/lembrary/imports/" + trigger.nick  + ".txt", "r+") as f:
         lines = f.read().splitlines()
 
         for l in lines():
             if not term in l:
                 contents += l + "\n"
             
-    with open("/lembrary/imports/" + trigger.nick  + ".txt", "w") as f:
+    with open("/lembrary/imports/" + trigger.nick  + ".txt", "w+") as f:
         f.write(contents)            
 
 
@@ -496,7 +504,7 @@ def exprData(expr):
 
 def getImports(tokens, nick):
     imports = ""
-    with open("/lembrary/imports/" + trigger.nick  + ".txt", "r") as f:
+    with open("/lembrary/imports/" + nick  + ".txt", "r") as f:
         imports = f.read()
         
     with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
