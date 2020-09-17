@@ -325,9 +325,10 @@ def type(bot, trigger):
         return
 
     expr = trigger.group(2)
-    module = getModule(expr, trigger.nick)
-    path = '/lembrary/' + module + '.hs'    
-    cmd = ['ghc', '-i/lembrary',  path, "-e", ":t " + expr]
+    _, _, index = process("e = " + expr, trigger.nick)
+    
+    path = '/lembrary/Def_e_' + str(index)  + '.hs'    
+    cmd = ['ghc', '-i/lembrary', path, "-e", ":t " + expr]
     result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     lines = result.stdout.decode('UTF-8').splitlines()
     ans =  '   '.join(lines)
@@ -412,7 +413,7 @@ def eval(bot, trigger):
         return
 
     expr = trigger.group(2)                   
-    ans, _, _ = process("main = print $ " + expr, trigger.nick)
+    ans, _, _ = process("main = print (" + expr + ")", trigger.nick)
     bot.reply(ans)
 
 
@@ -457,7 +458,7 @@ def update(bot, trigger):
         bot.reply("Update failed.")
 
 
-
+## FIXME: need to make sure processM imports work (dict vs string). Also pins, etc
 def moduleData(module):
     path = '/lembrary/' + module + '.hs'
     print("Opening " + path)
@@ -469,7 +470,7 @@ def moduleData(module):
         i = 0
         imports = dict()
         while not '=' in lines[i]:
-            if 'import' in lines[i]:
+            if 'import Def_' in lines[i]:
                 module = lines[i].split(" ")[1]
                 function = module.split("_")[1]
                 imports[function] = module
@@ -492,11 +493,29 @@ def exprData(expr):
     print("Parsing expression...")
     eqSign = expr.index('=')
     args = expr[:eqSign].split()
-    function = args[0]
+
+    keywords = ["case","class","data","default","deriving","do","else","forall"
+                ,"if","import","in","infix","infixl","infixr","instance","let","module"
+                ,"newtype","of","qualified","then","type","where","_"
+                ,"foreign","ccall","as","safe","unsafe"]
+
+    function = ""
+    
+    for a in args:
+        if not a in keywords:
+            function = a
+            break
+
+    #FIXME: bot not in scope, add another return value
+    if not function:
+        bot.reply('Illegal function name: ' + args[0])
+        return
+
     if re.search(r'\W', function) != None:
         bot.reply(
             'Illegal function name: only alphanumerics and underscores allowed')
         return
+            
     allTokens = set(re.split('\W+', expr[eqSign:]))
     tokens = allTokens.difference(set(args))
     
