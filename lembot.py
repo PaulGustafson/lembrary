@@ -346,7 +346,7 @@ def process(expr, nick):
 
 # Update pins in a module
 def processM(module, nick, depth, fmDict, pinDict):
-    expr, imports = moduleData(module)
+    expr, imports, otherImports = moduleData(module)
     function, args, tokens = exprData(expr)
 
     print("Processing imports...")
@@ -359,7 +359,12 @@ def processM(module, nick, depth, fmDict, pinDict):
                 imports[t] = fmDict[t][index]
 
     print("Making file...")
-    ans, index = makeFile(function, expr, imports.values())
+    totalImports = otherImports + "\n"
+    
+    for i in imports.values():
+        totalImports += "import " + i + "\n"
+        
+    ans, index = makeFile(function, expr, totalImports)
     return ans, function, index
 
     
@@ -462,6 +467,8 @@ def update(bot, trigger):
 def moduleData(module):
     path = '/lembrary/' + module + '.hs'
     print("Opening " + path)
+    otherImports = ""
+    
     with open(path, "r") as f:
         contents = f.read()
         print("Contents: \n" + contents)
@@ -475,6 +482,8 @@ def moduleData(module):
                 function = module.split("_")[1]
                 imports[function] = module
                 print("Import added: " + function + ":" + module)
+            elif 'import' in lines[i]:
+                otherImports += lines[i] + "\n"
                 
             i += 1
             if i >= len(lines):
@@ -485,7 +494,7 @@ def moduleData(module):
 
         print("Imports: " + str(imports))
         print("Expr: " + str(expr))
-        return expr, imports
+        return expr, imports, otherImports
 
 
 
