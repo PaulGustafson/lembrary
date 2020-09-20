@@ -6,6 +6,7 @@ from sqlitedict import SqliteDict
 import os
 import shutil
 import random
+import os.path
 
 @module.commands('import')
 def importC(bot, trigger):
@@ -29,7 +30,7 @@ def imports(bot, trigger):
 
     bot.reply("Imports: ")
     
-    with open("/lembrary/imports/" + trigger.nick  + ".txt", "r+") as f:
+    with open("/lembrary/imports/" + trigger.nick  + ".txt", "r") as f:
         lines = f.read().splitlines()
         for l in lines:
             bot.reply(l)
@@ -48,7 +49,7 @@ def unimport(bot, trigger):
     with open("/lembrary/imports/" + trigger.nick  + ".txt", "a+"):
         pass
     
-    with open("/lembrary/imports/" + trigger.nick  + ".txt", "r+") as f:
+    with open("/lembrary/imports/" + trigger.nick  + ".txt", "r") as f:
         lines = f.read().splitlines()
 
         for l in lines():
@@ -200,8 +201,7 @@ def pin(bot, trigger):
     if len(tokens) > 1:
         index = int(tokens[1])
     else:
-        bot.reply("Pin index required.")
-        return
+        index = -1
 
 
     if pinH(function, index, trigger.nick):
@@ -394,6 +394,12 @@ def makeFile(function, expr, imports):
         fmDict[function] = modList
         fmDict.commit()
 
+    # Sopel must be run from /lembrary for this to work
+    subprocess.run(["git", "add", path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    subprocess.run(["git", "commit", "-m", "Auto"],
+                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    subprocess.run(["git", "push"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        
     if function == "main":
         cmd = ['sandbox','runghc', '-i/lembrary',  path]
     else:
@@ -441,6 +447,9 @@ def let(bot, trigger):
 
 @module.commands('update')
 def update(bot, trigger):
+    """
+    Update function name based on pins.  Typical workflow: ".clearpins, .pin x <num>, .update y"
+    """
     if re.search(r'\W', trigger.nick) != None:
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
         return
@@ -532,8 +541,10 @@ def exprData(expr):
 
 def getImports(tokens, nick):
     imports = ""
-    with open("/lembrary/imports/" + nick  + ".txt", "r") as f:
-        imports = f.read()
+    path = "/lembrary/imports/" + nick  + ".txt"
+    if os.path.isfile(path):
+        with open(path, "r") as f:
+            imports = f.read()
         
     with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
         with SqliteDict(filename='/lembrary/pins/' + nick + '.sqlite') as pinDict:
