@@ -32,7 +32,7 @@ def imports(bot, trigger):
         pass
 
     bot.reply("Imports: ")
-    
+
     with open("/pylembrary/imports/" + trigger.nick  + ".txt", "r") as f:
         lines = f.read().splitlines()
         for l in lines:
@@ -379,7 +379,9 @@ def makeFile(function, expr, imports):
             index = 0
 
     module = "Def_" + function + "_" +  str(index)
-    contents = "module " + module + " where \n" 
+
+    contents = ""
+#    contents += "module " + module + " where \n" 
     contents += imports + "\n"
 
     contents += expr + "\n"
