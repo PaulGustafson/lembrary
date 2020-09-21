@@ -8,6 +8,52 @@ import shutil
 import random
 import os.path
 
+
+cmds = ["eval", "let", "show", "showall", "pin", "pins", "savepins", "loadpins", "clearpins", "info", "update", "type"]
+
+@module.commands('\w+')
+def cmd(bot, trigger):
+    if re.search(r'\W', trigger.nick) != None:
+        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
+        return
+
+    if not trigger.group(1) in cmds:
+        expr = trigger.group(0)[1:]
+        assignment = False
+        
+        for i in range(1, len(expr) - 1):
+            if (expr[i] == '=') and (not expr[i+1] in ['=','>']) and (not expr[i-1] in ['<', '>', '/']):
+                assignment = True
+                break
+            
+        print(assignment)
+
+        if assignment:
+            ans, function, index  = process(expr, trigger.nick)
+            if pinH(function, index, trigger.nick):
+                   bot.reply(ans)
+            else:
+                bot.reply("Definition failed.")
+
+        else:
+            ans, _, _ = process("main = print (" + expr + ")", trigger.nick)
+            bot.reply(ans)
+
+    
+@module.commands('eval')
+def eval(bot, trigger):
+    """
+    Evaluate an expression in Haskell.  Can use previously ".let"-defined functions. Example: ".eval 2 + 3".
+    """
+
+    if re.search(r'\W', trigger.nick) != None:
+        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
+        return
+
+    expr = trigger.group(2)                   
+    ans, _, _ = process("main = print (" + expr + ")", trigger.nick)
+    bot.reply(ans)
+    
 @module.commands('import')
 def importC(bot, trigger):
     if re.search(r'\W', trigger.nick) != None:
@@ -113,8 +159,6 @@ def info(bot,trigger):
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
         return
 
-    cmds = ["eval", "let", "show", "showall", "pin", "pins", "savepins",
-            "loadpins", "clearpins", "info", "update", "type"]
     if trigger.group(2):
         c = trigger.group(2).lower().strip()
         if c in cmds:
@@ -267,7 +311,7 @@ def pins(bot, trigger):
         bot.reply(ans)
 
         
-@module.commands('clearpins')
+@module.commands('clearpins','c')
 def clearpins(bot, trigger):
     """
     Clears all pins after saving a backup.  Type ".info pin" for more information about pins.
@@ -276,8 +320,11 @@ def clearpins(bot, trigger):
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
         return
 
-    savepins(bot, trigger)
-    os.remove('/lembrary/pins/' + trigger.nick + '.sqlite')
+    path = '/lembrary/pins/' + trigger.nick + '.sqlite'
+    if os.path.isfile(path):
+        savepins(bot, trigger)
+        os.remove(path)
+        
     bot.reply('Pins cleared.')
    
 
@@ -292,9 +339,13 @@ def savepins(bot, trigger):
 
     
     dest = trigger.nick + "_" + str(int(1000*time.time()))
-    shutil.copy("/lembrary/pins/" + trigger.nick + ".sqlite",
-                "/lembrary/savedPins/" + dest + ".sqlite")
-    bot.reply("Saved pins: " + dest)
+
+    path = "/lembrary/pins/" + trigger.nick + ".sqlite"
+    if os.path.isfile(path):
+        shutil.copy(path, "/lembrary/savedPins/" + dest + ".sqlite")
+        bot.reply("Saved pins: " + dest)
+    else:
+        bot.reply("No pins found.")
         
     
 @module.commands('loadpins')
@@ -397,8 +448,8 @@ def makeFile(function, expr, imports):
     # Sopel must be run from /lembrary for this to work
     subprocess.run(["git", "add", path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     subprocess.run(["git", "commit", "-m", "Auto"],
-                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    subprocess.run(["git", "push"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    # subprocess.run(["git", "push"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         
     if function == "main":
         cmd = ['sandbox','runghc', '-i/lembrary',  path]
@@ -411,21 +462,6 @@ def makeFile(function, expr, imports):
 
     return ans, index
 
-
-
-@module.commands('eval')
-def eval(bot, trigger):
-    """
-    Evaluate an expression in Haskell.  Can use previously ".let"-defined functions. Example: ".eval 2 + 3".
-    """
-
-    if re.search(r'\W', trigger.nick) != None:
-        bot.reply('Illegal nick: only alphanumerics and underscores allowed')
-        return
-
-    expr = trigger.group(2)                   
-    ans, _, _ = process("main = print (" + expr + ")", trigger.nick)
-    bot.reply(ans)
 
 
 @module.commands('let')
@@ -448,7 +484,7 @@ def let(bot, trigger):
 @module.commands('update')
 def update(bot, trigger):
     """
-    Update function name based on pins.  Typical workflow: ".clearpins, .pin x <num>, .update y"
+    Update function recursively based on current pins.  Typical workflow: ".clearpins, .pin x 3, .update y"  
     """
     if re.search(r'\W', trigger.nick) != None:
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
@@ -571,6 +607,9 @@ def getModule(f, nick):
                 return module
             
     raise Exception('Module not found for ' + f)
+
+
+
         
 
 
