@@ -13,6 +13,8 @@ cmds = ["eval", "let", "show", "showall", "pin", "pins", "savepins", "loadpins",
 
 @module.commands('\w+')
 def cmd(bot, trigger):
+    print("Working")
+    
     if re.search(r'\W', trigger.nick) != None:
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
         return
@@ -445,12 +447,10 @@ def makeFile(function, expr, imports):
         fmDict[function] = modList
         fmDict.commit()
 
-    # Sopel must be run from /lembrary for this to work
-    subprocess.run(["git", "add", path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    subprocess.run(["git", "commit", "-m", "Auto"],
-                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    # subprocess.run(["git", "push"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        
+    # Make sure cron is actually pushing this
+    subprocess.run(["git", "-C", "/lembrary", "add", path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    
+    
     if function == "main":
         cmd = ['sandbox','runghc', '-i/lembrary',  path]
     else:
