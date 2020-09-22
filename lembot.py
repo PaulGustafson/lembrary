@@ -11,7 +11,7 @@ import os.path
 
 cmds = ["eval", "let", "show", "showall", "pin", "pins", "savepins", "loadpins", "clearpins", "info", "update", "type"]
 
-@module.commands('\w+')
+@module.rule('.*')
 def cmd(bot, trigger):
     print("Working")
     
@@ -19,8 +19,10 @@ def cmd(bot, trigger):
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
         return
 
-    if not trigger.group(1) in cmds:
-        expr = trigger.group(0)[1:]
+    print(trigger.group)
+    
+    if not trigger.group(0)[0] == '.':
+        expr = trigger.group(0)
         assignment = False
         
         for i in range(1, len(expr) - 1):
