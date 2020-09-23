@@ -1,9 +1,8 @@
 #!/bin/bash
 TMPUSER="tmp_`date +%s`_$RANDOM" \
        && sudo useradd -M -N -r -s /bin/false $TMPUSER \
-       && sudo -u $TMPUSER timeout 2 $@ 
-
-sudo killall -9 -u $TMPUSER &> /dev/null
-sudo deluser -f $TMPUSER &> /dev/null
+       && sudo -u $TMPUSER timeout 5 "$@"
+sudo killall -9 -u $TMPUSER &> /dev/null \
+    && sudo deluser -f $TMPUSER &> /dev/null &
 
 #FIXME: (0) x (0) =  (0)   \n    (0) x (1) =  (1)  \n  (1) x (1) = (0) + (1) \n"   Usage: killall [ -Z CONTEXT ] [ -u USER ] [ -y TIME ] [ -o TIME ] [ -eIgiqrvw ]                  [ -s SIGNAL | -SIGNAL ] NAME...          killall -l, --list          killall -V, --version        -e,--exact          require exact match for very long names     -I,--ignore-case    case insensitive process name match     -g,--process-group  kill process group instead of process
