@@ -1,10 +1,8 @@
 #!/bin/bash
 
-
-scp pylembot.py python@irc.lembrary.com:~/.sopel/modules
-#scp lembot.py haskell@irc.lembrary.com:~/.sopel/modules 
+scp lembot.py haskell@irc.lembrary.com:~/.sopel/modules 
 # scp sandbox haskell@irc.lembrary.com:~/.local/bin  
 # scp default.cfg haskell@irc.lembrary.com:~/.sopel 
-ssh python@irc.lembrary.com '~/.local/bin/sopel restart'
+ssh haskell@irc.lembrary.com '~/.local/bin/sopel restart'
 
 
