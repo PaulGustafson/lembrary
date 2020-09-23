@@ -9,9 +9,10 @@ import random
 import os.path
 
 
-cmds = ["eval", "let", "show", "showall", "pin", "pins", "savepins", "loadpins", "clearpins", "info", "update", "type"]
+cmds = ["eval", "let", "show", "showall", "pin", "pins", "savepins", "loadpins", "clearpins", "info", "update", "type", "import"]
 
-@module.rule('.*')
+
+@module.commands('\w+')
 def cmd(bot, trigger):
     print("Working")
     
@@ -19,10 +20,8 @@ def cmd(bot, trigger):
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
         return
 
-    print(trigger.group)
-    
-    if not trigger.group(0)[0] == '.':
-        expr = trigger.group(0)
+    if not trigger.group(1) in cmds:
+        expr = trigger.group(0)[1:]
         assignment = False
         
         for i in range(1, len(expr) - 1):
@@ -33,15 +32,47 @@ def cmd(bot, trigger):
         print(assignment)
 
         if assignment:
-            ans, function, index  = process(expr, trigger.nick)
+            ans, function, index  = process(bot, expr, trigger.nick)
             if pinH(function, index, trigger.nick):
                    bot.reply(ans)
             else:
                 bot.reply("Definition failed.")
 
         else:
-            ans, _, _ = process("main = print (" + expr + ")", trigger.nick)
+            ans, _, _ = process(bot, "main = print (" + expr + ")", trigger.nick)
             bot.reply(ans)
+            
+# @module.rule('.*')
+# def cmd(bot, trigger):
+#     print("Working")
+    
+#     if re.search(r'\W', trigger.nick) != None:
+#         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
+#         return
+
+#     print(trigger.group)
+    
+#     if not trigger.group(0)[0] == '.':
+#         expr = trigger.group(0)
+#         assignment = False
+        
+#         for i in range(1, len(expr) - 1):
+#             if (expr[i] == '=') and (not expr[i+1] in ['=','>']) and (not expr[i-1] in ['<', '>', '/']):
+#                 assignment = True
+#                 break
+            
+#         print(assignment)
+
+#         if assignment:
+#             ans, function, index  = process(expr, trigger.nick)
+#             if pinH(function, index, trigger.nick):
+#                    bot.reply(ans)
+#             else:
+#                 bot.reply("Definition failed.")
+
+#         else:
+#             ans, _, _ = process("main = print (" + expr + ")", trigger.nick)
+#             bot.reply(ans)
 
     
 @module.commands('eval')
@@ -55,11 +86,14 @@ def eval(bot, trigger):
         return
 
     expr = trigger.group(2)                   
-    ans, _, _ = process("main = print (" + expr + ")", trigger.nick)
+    ans, _, _ = process(bot, "main = print (" + expr + ")", trigger.nick)
     bot.reply(ans)
     
 @module.commands('import')
 def importC(bot, trigger):
+    """
+    Import a module from the haskell-platform packages.  Example: ".import Data.List"
+    """
     if re.search(r'\W', trigger.nick) != None:
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
         return
@@ -165,8 +199,15 @@ def info(bot,trigger):
 
     if trigger.group(2):
         c = trigger.group(2).lower().strip()
+
+        def translate(c):
+            if c == 'import':
+                return 'importC'
+            else:
+                return c
+                
         if c in cmds:
-            bot.reply(globals()[c].__doc__)
+            bot.reply(globals()[translate(c)].__doc__)
     else:
         bot.say("Commands: " + ", ".join(cmds))
         bot.say('Type ".info <command>" for more information about a specific command.')
@@ -374,14 +415,15 @@ def loadpins(bot, trigger):
 
 @module.commands('type')
 def type(bot, trigger):
-    
+    """
+    Display the type of an expression.  Example: .type "adsf"
+    """
     if re.search(r'\W', trigger.nick) != None:
         bot.reply('Illegal nick: only alphanumerics and underscores allowed')
         return
 
     expr = trigger.group(2)
-    _, _, index = process("e = " + expr, trigger.nick)
-    
+    _, _, index = process(bot, "e = " + expr, trigger.nick)    
     path = '/lembrary/Def_e_' + str(index)  + '.hs'    
     cmd = ['ghc', '-i/lembrary', path, "-e", ":t " + expr]
     result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -391,8 +433,8 @@ def type(bot, trigger):
     bot.reply(ans)
     
 
-def process(expr, nick):
-    function, args, tokens = exprData(expr)
+def process(bot, expr, nick):
+    function, args, tokens = exprData(bot, expr)   
     imports = getImports(tokens, nick)
     ans, index = makeFile(function, expr, imports)
     return ans, function, index
@@ -400,9 +442,9 @@ def process(expr, nick):
 
 
 # Update pins in a module
-def processM(module, nick, depth, fmDict, pinDict):
+def processM(bot, module, nick, depth, fmDict, pinDict):
     expr, imports, otherImports = moduleData(module)
-    function, args, tokens = exprData(expr)
+    function, args, tokens = exprData(bot, expr)
 
     print("Processing imports...")
     for t in tokens:
@@ -410,7 +452,7 @@ def processM(module, nick, depth, fmDict, pinDict):
             if t in pinDict:
                 imports[t] = fmDict[t][pinDict[t]]
             elif (t in imports) and (depth > 0):
-                _, _, index = processM(imports[t], nick, depth - 1, fmDict, pinDict)
+                _, _, index = processM(bot, imports[t], nick, depth - 1, fmDict, pinDict)
                 imports[t] = fmDict[t][index]
 
     print("Making file...")
@@ -430,7 +472,7 @@ def makeFile(function, expr, imports):
         else:
             index = 0
 
-    module = "Def_" + function + "_" +  str(index)
+    module = "Def_" + re.sub(r'\W+', '', function) + "_" +  str(index)
     contents = "module " + module + " where \n" 
     contents += imports + "\n"
 
@@ -477,7 +519,7 @@ def let(bot, trigger):
         return
     
     expr = trigger.group(2)
-    ans, function, index  = process(expr, trigger.nick)
+    ans, function, index  = process(bot, expr, trigger.nick)
     if pinH(function, index, trigger.nick):
         bot.reply(ans)
     else:
@@ -502,7 +544,7 @@ def update(bot, trigger):
     print("Processing update...")
     with SqliteDict(filename='/lembrary/fn_mod_dict.sqlite') as fmDict:
         with SqliteDict(filename='/lembrary/pins/' + trigger.nick + '.sqlite') as pinDict:
-            ans, function, index = processM(module, trigger.nick, recursionDepth, fmDict, pinDict)
+            ans, function, index = processM(bot, module, trigger.nick, recursionDepth, fmDict, pinDict)
 
     if pinH(function, index, trigger.nick):
         bot.reply(ans)
@@ -545,7 +587,7 @@ def moduleData(module):
 
 
 
-def exprData(expr):
+def exprData(bot, expr):
     print("Parsing expression...")
     eqSign = expr.index('=')
     args = expr[:eqSign].split()
@@ -565,12 +607,12 @@ def exprData(expr):
     #FIXME: bot not in scope, add another return value
     if not function:
         bot.reply('Illegal function name: ' + args[0])
-        return
+        raise NameError()
 
     if re.search(r'\W', function) != None:
         bot.reply(
             'Illegal function name: only alphanumerics and underscores allowed')
-        return
+        raise NameError()
             
     allTokens = set(re.split('\W+', expr[eqSign:]))
     tokens = allTokens.difference(set(args))
